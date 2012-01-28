@@ -1,0 +1,320 @@
+body {
+    margin: 0 0 0 0;
+    background: #967FA9;
+    font-size: 0.9em;
+}
+
+body, p, .ui-widget, input {
+    font-family: "Helvetica Neue Light", "Helvetica", "Arial", sans-serif;
+}
+
+h1, h2, h3, h4, h5 {
+    color: #967FA9;
+}
+
+a,
+a:visited {
+    text-decoration: none;
+    color: #696565;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+ul {
+    padding-left: 10px;
+}
+
+ul li {
+    list-style: none;
+}
+
+div#header {
+    overflow: auto;
+    width: 100%;
+}
+
+div#logo h1,
+div#logo a,
+div#logo p {
+    text-decoration: none;
+    color: white;
+}
+
+div#logo {
+    font-family: "Merienda One", 'cursive', "Helvetica Neue Light", "Helvetica", "Arial", sans-serif;
+    height: 45px;
+    width: 200px;
+    margin: 5px 0px 25px 30px;
+}
+
+div#logo,
+#logo p,
+#logo h1 {
+    display: inline;
+    float: left;
+}
+
+#logo p,
+#logo h1 {
+    margin: 0 1em 0 0;
+}
+
+div#logo p {
+    text-indent: .1em;
+    font-size: 0.9em;
+}
+
+div#search {
+    display: block;
+    width: 500px;
+    margin: 1.2em 0 0 2em; 
+    float: left;
+}
+
+select#type {
+    font-size: 1.1em;
+    float: left;
+}
+
+div#buttons {
+    width: 100%;
+    float: left;
+    margin-bottom: 5px;
+}
+
+p#loading {
+    text-align: center;
+}
+
+form input#price-from,
+form input#price-to {
+    width:50px;
+}
+
+form input#query {
+    width:325px;
+    float: left;
+}
+
+form input#location {
+    border: 1px;
+    width: auto;
+    margin-bottom: 10px;
+}
+
+div#locations {
+    background-color :#fff;
+    cursor: text;
+    float: left;
+    width: 100%;
+}
+
+div#locations span {
+    float: left;
+    margin:0 3px 3px 0;
+    padding:3px 20px 4px 8px;
+	position:relative;
+    background-color:#fff;
+	border:1px solid #E0D1CC;
+    -moz-border-radius:7px;
+	-webkit-border-radius:7px;
+    border-radius:7px;
+	font:normal 11px Verdana, Sans-serif;
+}
+
+ul.searchbox-dropdown a.remove {
+    color:#666;
+	font:bold .8em Verdana, Sans-serif;
+    text-decoration:none;
+}
+
+div#locations span a {
+    margin-bottom: 10px;
+    position: absolute;
+    right:8px;
+    top:2px;
+    color:#666;
+	font:bold 12px Verdana, Sans-serif;
+    text-decoration:none;
+}
+
+span#locations a:hover {
+    color:#ff0000;
+}
+
+.ui-menu .ui-menu-item {
+    white-space:nowrap;
+    padding:0 10px 0 0;
+}
+
+form label {
+    font-size: 1.2em;   
+}
+
+div#results {
+    overflow: auto;
+    min-height: 640px;
+    width: 100%;
+    padding-top: 3em;
+    background: white;
+    padding-bottom: 20px;
+}
+
+div#sidebar {
+    width: 250px;
+    float: left;
+}
+
+div#sidebar a {
+}
+
+div#sidebar ul {
+    margin: 0em;
+    list-style-type: none;
+    padding-left: 40px;
+}
+
+div#sidebar li {
+    margin-bottom: 1em;
+}
+
+div#content {
+    line-height: 1.5em;
+    float: left;
+    margin: 0em 1em 1em 1em;
+    overflow: visible;
+    word-wrap: break-word;
+}
+
+div#content p {
+}
+
+div#content h2:first-child {
+    margin-top: 0em;
+}
+
+div#footer {
+    padding-top: 3px;
+    font-size: .5em;
+    text-align: center;
+    color: white;
+}
+
+.hidden {
+    display: none;
+}
+
+.searchbox-wrapper{
+	margin:0;
+	padding:0;
+}
+
+.searchbox-wrapper input[type="text"],
+ul.searchbox-dropdown {
+	border:1px solid #fff;
+	background: #fafafa; 
+	background: -webkit-gradient(linear, left top, left bottom, from(#f2f2f2), to(#fafafa)); 
+	background: -moz-linear-gradient(top, #f2f2f2, #fafafa);
+	font-size:1.1em;
+	-moz-box-shadow:1px 1px 3px #555;
+	-webkit-box-shadow:1px 1px 3px #555;
+	-box-shadow:1px 1px 3px #555;
+	outline:none;
+	padding:6px 5px 6px 20px;
+	text-shadow:1px 1px 1px #fff;
+	width:295px;
+	margin:3px 0px;
+}
+
+ul.searchbox-dropdown {
+	list-style:none;
+	width:390px;
+    min-height: 125px;
+	padding:6px 5px;
+	-moz-border-radius:0px 0px 10px 10px;
+	-webkit-border-bottom-right-radius:10px;
+	-webkit-border-bottom-left-radius:10px;
+	border-bottom-right-radius:10px;
+	border-bottom-left-radius:10px;
+    overflow: auto;
+    float: left;
+}
+
+ul.searchbox-dropdown li {
+	font-size:16px;
+	line-height:32px;
+	height:32px;
+}
+
+ul.searchbox-dropdown li input[type="checkbox"] {
+	margin:10px 4px 0 5px;
+    float: left;
+}
+
+ul.searchbox-dropdown li.searchbox-close {
+    width: 20px;
+    float: right;
+}
+
+ul.searchbox-dropdown li.locations {
+    width: 100%;
+}
+
+ul.searchbox-dropdown li.searchbox-filter{
+	font-size:12px;
+	text-transform:uppercase;
+	letter-spacing:1px;
+	color:#444;
+	height:16px;
+	line-height:16px;
+	padding:5px;
+}
+
+input.searchbox-search {
+	background:#f2f2f2 url(../icons/search.png) no-repeat center center;
+	height:32px;
+	width:50px;
+	float:left;
+	border:none;
+	margin:3px 0px;
+	border:1px solid #fff;
+	-moz-box-shadow:1px 1px 3px #555;
+	-webkit-box-shadow:1px 1px 3px #555;
+	-box-shadow:1px 1px 3px #555;
+	outline:none;
+	cursor:pointer;
+}
+
+input.searchbox-search:hover {
+    float:left;
+	background-color:#fff;
+}
+
+/* Scrollable autocomplete results. */
+.ui-autocomplete {
+    max-height: 200px;
+    overflow-y: auto;
+    /* prevent horizontal scrollbar */
+    overflow-x: hidden;
+    /* add padding to account for vertical scrollbar */
+    padding-right: 25px;
+}
+
+/* IE 6 doesn't support max-height
+ * we use height instead, but this forces the menu to always be this tall
+ */
+* html .ui-autocomplete {
+    height: 100px;
+}
+
+/* An autocomplete item in the drop-down */
+.ui-menu .ui-menu-item a {
+    font-size: .9em;
+}
+
+div.success-message {
+    background: #CDE8D5;
+    width: 100%;
+}
