@@ -12,7 +12,6 @@ app.config.from_envvar('SOLACE_SETTINGS')
 # Serve static files if in debug mode.
 if app.config['DEBUG']:
     from werkzeug import SharedDataMiddleware
-    import os
     app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
       '/': os.path.join(os.path.dirname(__file__), 'public')
     })
