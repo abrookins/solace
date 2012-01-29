@@ -33,7 +33,7 @@ def get_extractor(category):
 
 def get_price(el):
     """
-    Try to extract a price from a Craiglist `el` (BeautifulSoup element).
+    Try to extract a price from a BeautifulSoup element `el`.
     """
     money = re.compile('|'.join([
       r'^\$?(\d*\.\d{1,2})$',
@@ -69,7 +69,7 @@ def extract_item_for_sale(item):
 
 @register_extractor('jjj', 'ggg', 'bbb')
 def extract_job(item):
-    """ Extra a job posting. """
+    """ Extra a Craigslist job posting. """
     result = {}
     result['date'] = item.contents[0].strip().rstrip('- ')
     result['link'] = item.contents[1].get('href')
@@ -86,7 +86,7 @@ def extract_job(item):
 
 @register_extractor('hhh')
 def extract_housing(item):
-    """ Extract a house or rental item. """
+    """ Extract a Craigslist house for sale or rental. """
     result = {}
 
     if '/' in item.contents[1]:
