@@ -29,7 +29,7 @@ window.solace.handleAjaxError = (xhr, status, error) ->
 class CraigslistSearch extends Backbone.Model
   initialize: (options) ->
     @createdAt = null
-    @result = options.result
+    @result = options.result or {}
     @url = options.url
     @query = options.query
     @type = options.type
@@ -75,7 +75,7 @@ class CraigslistSearch extends Backbone.Model
         error: window.solace.handleAjaxError
         success: (data) =>
           if data.result
-            @result = data.result
+            @result.items = data.result
             @result.created = new Date().toUTCString()
             @cacheResult()
           @trigger('searchFinished')
@@ -407,19 +407,37 @@ class AppView extends Backbone.View
   displaySearchResults: =>
     @showSearchIcon()
 
-    if not @lastSearch.result
+    if not @lastSearch.result.items
       @retryLastSearch()
     else
       @retryCount = 0
 
     @displaySection(@lastSearch.type)
     resultTypeItems = $('#'+@lastSearch.type).children('.items')
+    locationNav = $('ul#locationNav')
+    locationNav.removeClass('hidden')
 
     $('<p>').text("Searching for '#{@lastSearch.query}.'").appendTo(resultTypeItems)
 
-    for location, items of @lastSearch.result
+    for location, items of @lastSearch.result.items
       locationName = @locationsReversed[location]
-      $('<h3>').text(locationName).appendTo(resultTypeItems)
+      locationHeader = $('<h3>')
+      locationHeader.text(locationName)
+
+      # Create an anchor for this location and add a link to the location in
+      # the sidebar.
+      $('<a>').attr({
+        name: "#{encodeURIComponent(locationName)}",
+      }).prependTo(locationHeader)
+
+      li = $('<li>').appendTo(locationNav)
+
+      $('<a>').attr({
+        href: "##{encodeURIComponent(locationName)}",
+        title: locationName,
+      }).text(locationName).appendTo(li)
+
+      locationHeader.appendTo(resultTypeItems)
       ul = $('<ul>').appendTo(resultTypeItems)
 
       if items
@@ -431,7 +449,7 @@ class AppView extends Backbone.View
 
           $("<a>").attr({
             href: item.link,
-            title: decodeURI(title)
+            title: title
             target: "_blank"
           }).text(title).appendTo(li)
       else
@@ -451,6 +469,11 @@ class AppView extends Backbone.View
     $('#type').val(type)
     $('#query').val(query)
 
+  # Clear any location nagivation links in the sidebar.
+  clearLocationNav: ->
+    $('ul#locationNav li').remove()
+    $('ul#locationNav').addClass('hidden')
+
   clearSavedSearches: =>
     historyDiv = $('#history')
     historyItems = historyDiv.children('.items')
@@ -463,6 +486,7 @@ class AppView extends Backbone.View
   displaySavedSearches: ->
     savedSearches = @craigslist.getCachedSearches()
     historyItems = $('#history').children('.items')
+
     @displaySection('history')
 
     if savedSearches
@@ -497,6 +521,9 @@ class AppView extends Backbone.View
     # Clear any search results.
     resultDivs.empty()
 
+    # Clear location  nav
+    @clearLocationNav()
+
     # Hide divs other than the chosen section div.
     $('#result-listing div').addClass('hidden')
     sectionDiv.removeClass('hidden')
@@ -506,7 +533,7 @@ class AppView extends Backbone.View
   # locations form when constructing search URLs.
   parseSearchLocations: (locationString) ->
     return (l.replace('location=', '') for l in locationString.split('&'))
-   
+
 
 #### Router ####
 # Handle page navigation with back/forward support.

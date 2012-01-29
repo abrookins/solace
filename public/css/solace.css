@@ -176,6 +176,10 @@ div#sidebar ul {
     padding-left: 40px;
 }
 
+ul#locationNav {
+    padding-bottom: 20px;
+}
+
 div#sidebar li {
     margin-bottom: 1em;
 }

@@ -20,7 +20,7 @@
     }
     CraigslistSearch.prototype.initialize = function(options) {
       this.createdAt = null;
-      this.result = options.result;
+      this.result = options.result || {};
       this.url = options.url;
       this.query = options.query;
       this.type = options.type;
@@ -63,7 +63,7 @@
           error: window.solace.handleAjaxError,
           success: __bind(function(data) {
             if (data.result) {
-              this.result = data.result;
+              this.result.items = data.result;
               this.result.created = new Date().toUTCString();
               this.cacheResult();
             }
@@ -395,22 +395,34 @@
       }
     };
     AppView.prototype.displaySearchResults = function() {
-      var item, items, li, location, locationName, resultTypeItems, title, ul, _ref, _results;
+      var item, items, li, location, locationHeader, locationName, locationNav, resultTypeItems, title, ul, _ref, _results;
       this.showSearchIcon();
-      if (!this.lastSearch.result) {
+      if (!this.lastSearch.result.items) {
         this.retryLastSearch();
       } else {
         this.retryCount = 0;
       }
       this.displaySection(this.lastSearch.type);
       resultTypeItems = $('#' + this.lastSearch.type).children('.items');
+      locationNav = $('ul#locationNav');
+      locationNav.removeClass('hidden');
       $('<p>').text("Searching for '" + this.lastSearch.query + ".'").appendTo(resultTypeItems);
-      _ref = this.lastSearch.result;
+      _ref = this.lastSearch.result.items;
       _results = [];
       for (location in _ref) {
         items = _ref[location];
         locationName = this.locationsReversed[location];
-        $('<h3>').text(locationName).appendTo(resultTypeItems);
+        locationHeader = $('<h3>');
+        locationHeader.text(locationName);
+        $('<a>').attr({
+          name: "" + (encodeURIComponent(locationName))
+        }).prependTo(locationHeader);
+        li = $('<li>').appendTo(locationNav);
+        $('<a>').attr({
+          href: "#" + (encodeURIComponent(locationName)),
+          title: locationName
+        }).text(locationName).appendTo(li);
+        locationHeader.appendTo(resultTypeItems);
         ul = $('<ul>').appendTo(resultTypeItems);
         _results.push((function() {
           var _i, _len, _results2;
@@ -425,7 +437,7 @@
               li = $('<li>').appendTo(ul);
               _results2.push($("<a>").attr({
                 href: item.link,
-                title: decodeURI(title),
+                title: title,
                 target: "_blank"
               }).text(title).appendTo(li));
             }
@@ -447,6 +459,10 @@
       }
       $('#type').val(type);
       return $('#query').val(query);
+    };
+    AppView.prototype.clearLocationNav = function() {
+      $('ul#locationNav li').remove();
+      return $('ul#locationNav').addClass('hidden');
     };
     AppView.prototype.clearSavedSearches = function() {
       var historyDiv, historyItems, successDiv;
@@ -504,6 +520,7 @@
       sectionDiv = $('#' + sectionId);
       sectionItems = sectionDiv.children('.items');
       resultDivs.empty();
+      this.clearLocationNav();
       $('#result-listing div').addClass('hidden');
       sectionDiv.removeClass('hidden');
       return sectionItems.removeClass('hidden');
