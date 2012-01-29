@@ -190,6 +190,38 @@ class Craigslist extends Backbone.Model
     return cachedSearches
 
 
+#### ItemView ####
+class ItemView extends Backbone.View
+  initialize: (options) ->
+    @item = options.item
+    @ul = options.ul
+    @li = null
+    @render()
+
+  render: ->
+    title = "#{@item.date} - #{@item.desc} #{@item.location}"
+
+    if @item.price
+      title = "#{title} - $#{@item.price}"
+
+    @li = $('<li>').appendTo(@ul)
+
+    $("<a>").attr({
+      href: @item.link,
+      title: title
+      target: "_blank"
+    }).text(title).appendTo(@li)
+
+  remove: ->
+    @li.remove() 
+
+  hide: ->
+    @li.addClass('hidden')
+
+  show: ->
+    @li.removeClass('hidden')
+
+
 #### AppView ####
 # The main view for the app: autocomplete, form behavior.
 class AppView extends Backbone.View
@@ -207,6 +239,9 @@ class AppView extends Backbone.View
     @locationsReversed = {}
     @locationsReversed[url] = city for city, url of @locations['cities']
     @craigslist = new Craigslist
+
+    # TODO: This should be a Collection.
+    @itemViews = []
 
     $('#submit').live('click', @handleSearchClick)
 
@@ -410,19 +445,25 @@ class AppView extends Backbone.View
   # separated by headers for each location the user searched.
   displaySearchResults: =>
     @showSearchIcon()
+    prices = []
 
     if not @lastSearch.result.items
       @retryLastSearch()
     else
       @retryCount = 0
 
+    # TODO: Refactor other sections so we can call @clearItems() in
+    # @displaySearch()
+    @clearItems()
     @displaySection(@lastSearch.type)
-    resultTypeItems = $('#'+@lastSearch.type).children('.items')
+  
+    resultType = $('#'+@lastSearch.type).children('.items')
     locationNav = $('ul#locationNav')
-    # Show the separator
-    $('#sidebar div.separator').removeClass('hidden')
 
-    $('<p>').text("Searching for '#{@lastSearch.query}.'").appendTo(resultTypeItems)
+    # Show the location separator
+    $('#locationSeparator').removeClass('hidden')
+
+    $('<p>').text("Searching for '#{@lastSearch.query}.'").appendTo(resultType)
 
     for location, items of @lastSearch.result.items
       locationName = @locationsReversed[location]
@@ -442,23 +483,64 @@ class AppView extends Backbone.View
         title: locationName,
       }).text(locationName).appendTo(li)
 
-      locationHeader.appendTo(resultTypeItems)
-      ul = $('<ul>').appendTo(resultTypeItems)
+      locationHeader.appendTo(resultType)
+      ul = $('<ul>').appendTo(resultType)
 
-      if items
-        for item in items
-          title = "#{item.date} - #{item.desc} #{item.location}"
-          if item.price
-            title = "#{title} - $#{item.price}"
-          li = $('<li>').appendTo(ul)
+      for item in items
+        if item.price
+          prices.push(item.price)
 
-          $("<a>").attr({
-            href: item.link,
-            title: title
-            target: "_blank"
-          }).text(title).appendTo(li)
-      else
-        $("<p>").text("No results for this location.").appendTo(resultTypeItems)
+        @itemViews.push(new ItemView(
+          item: item
+          ul: ul
+        ))
+
+      if @itemViews.length == 0
+        $("<p>").text("No results for this location.").appendTo(resultType)
+
+    if prices.length > 0
+      @displayPrices(prices)
+
+  # Display price ranges given an array of numbers, `prices`.
+  displayPrices: (prices) ->
+    priceNav = $('ul#priceNav')
+
+    # Show the price separator
+    $('#priceSeparator').removeClass('hidden')
+
+    # TODO: Partition `prices` with e.g., _.groupBy, instead of using fixed
+    # groups.
+    priceGroups = [0, _.min(prices), 25, 50, 250, 500, _.max(prices)]
+    priceCounts = {}
+    priceCounts[group] = 0 for group in priceGroups
+
+    for price, i in prices
+      for groupMax in priceGroups
+        if price <= groupMax
+          priceCounts[groupMax] += 1
+          break
+
+    for price, i in priceGroups
+      if i == 0
+        continue
+
+      min = priceGroups[i-1]
+      groupName = "$#{min} - $#{price} (#{priceCounts[price]})"
+      li = $('<li>').appendTo(priceNav)
+
+      $('<a>').attr({
+        href: "/#/filter/#{min}/#{price}",
+        title: groupName,
+      }).text(groupName).appendTo(li)
+
+    # TODO: Make a list+link factory function.
+    li = $('<li>').appendTo(priceNav)
+
+    $('<a>').attr({
+      href: "/#/filter/all/all",
+      title: 'All',
+    }).text('All').appendTo(li)
+
 
   # Set the search box form elements to the given parameters.
   #
@@ -474,12 +556,12 @@ class AppView extends Backbone.View
     $('#type').val(type)
     $('#query').val(query)
 
-  # Clear any location nagivation links in the sidebar.
-  clearLocationNav: ->
+  # Clear location and price links and separator lines in the sidebar.
+  clearSidebar: ->
     $('ul#locationNav li').remove()
-    # Hide the separator line
+    $('ul#priceNav li').remove()
+    # Hide any separator lines
     $('#sidebar div.separator').addClass('hidden')
-
 
   clearSavedSearches: =>
     historyDiv = $('#history')
@@ -513,6 +595,15 @@ class AppView extends Backbone.View
     else
       $("<p>").text("No past searches on record.").appendTo(history)
 
+  # Clear search results and section content.
+  clearItems: () ->
+    # Remove any ItemViews created by the last search.
+    for item in @itemViews
+      item.remove()
+      delete(item)
+
+    @itemViews = []
+
   displayKeyboardShortcuts: ->
     @displaySection('keyboard-shortcuts')
 
@@ -520,16 +611,19 @@ class AppView extends Backbone.View
     @displaySection('welcome')
 
   displaySection: (sectionId) ->
-    listingDiv = $('#result-listing').removeClass('hidden')
-    resultDivs = $('#result-listing div.items')
+    listingDiv = $('#result-listing')
+    listingDiv.removeClass('hidden')
     sectionDiv = $('#'+sectionId)
     sectionItems = sectionDiv.children('.items')
 
-    # Clear any search results.
-    resultDivs.empty()
+    # Clear section content (search results, etc.).
+    # Ideally this would be a call to @clearItems(), but only search uses a
+    # View class to render individual content items, so here we remove children
+    # of div.items manually. TODO: Fix this.
+    $('#result-listing div.items').empty()
 
-    # Clear location  nav
-    @clearLocationNav()
+    # Clear the sidebar
+    @clearSidebar()
 
     # Hide divs other than the chosen section div.
     $('#result-listing div').addClass('hidden')
@@ -541,6 +635,24 @@ class AppView extends Backbone.View
   parseSearchLocations: (locationString) ->
     return (l.replace('location=', '') for l in locationString.split('&'))
 
+  # Filter search results by values in `options`.
+  # Only supports 'minPrice' and 'maxPrice' at present.
+  filter: (options) ->
+    if options.minPrice == 'all'
+      minPrice = 'all'
+      maxPrice = null
+    else
+      minPrice = parseInt(options.minPrice)
+      maxPrice = parseInt(options.maxPrice)
+
+    for view in @itemViews
+      itemPrice = view.item.price
+
+      if minPrice == 'all' or itemPrice >= minPrice and itemPrice <= maxPrice 
+        view.show()
+      else
+        view.hide()
+
 
 #### Router ####
 # Handle page navigation with back/forward support.
@@ -551,6 +663,7 @@ class Router extends Backbone.Router
     'search/:locations/:type/:query': 'search'
     'history': 'history'
     'keyboard': 'keyboard'
+    'filter/:min/:max': 'filter'
 
   initialize: (options) ->
     @app = new AppView
@@ -587,6 +700,13 @@ class Router extends Backbone.Router
   # Show keyboard shortcuts.
   keyboard: =>
     @app.displayKeyboardShortcuts()
+
+  # Filter search results by `price`.
+  filter: (min, max) ->
+    @app.filter(
+      minPrice: min
+      maxPrice: max
+    )
 
 
 window.solace.Router = Router

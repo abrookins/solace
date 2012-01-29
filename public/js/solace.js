@@ -1,5 +1,5 @@
 (function() {
-  var AppView, Craigslist, CraigslistSearch, Router;
+  var AppView, Craigslist, CraigslistSearch, ItemView, Router;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -183,6 +183,41 @@
     };
     return Craigslist;
   })();
+  ItemView = (function() {
+    __extends(ItemView, Backbone.View);
+    function ItemView() {
+      ItemView.__super__.constructor.apply(this, arguments);
+    }
+    ItemView.prototype.initialize = function(options) {
+      this.item = options.item;
+      this.ul = options.ul;
+      this.li = null;
+      return this.render();
+    };
+    ItemView.prototype.render = function() {
+      var title;
+      title = "" + this.item.date + " - " + this.item.desc + " " + this.item.location;
+      if (this.item.price) {
+        title = "" + title + " - $" + this.item.price;
+      }
+      this.li = $('<li>').appendTo(this.ul);
+      return $("<a>").attr({
+        href: this.item.link,
+        title: title,
+        target: "_blank"
+      }).text(title).appendTo(this.li);
+    };
+    ItemView.prototype.remove = function() {
+      return this.li.remove();
+    };
+    ItemView.prototype.hide = function() {
+      return this.li.addClass('hidden');
+    };
+    ItemView.prototype.show = function() {
+      return this.li.removeClass('hidden');
+    };
+    return ItemView;
+  })();
   AppView = (function() {
     __extends(AppView, Backbone.View);
     function AppView() {
@@ -218,6 +253,7 @@
         this.locationsReversed[url] = city;
       }
       this.craigslist = new Craigslist;
+      this.itemViews = [];
       $('#submit').live('click', this.handleSearchClick);
       $('#clear-history').live('click', this.clearSavedSearches);
       this.locationsDiv.live('click', __bind(function() {
@@ -395,20 +431,21 @@
       }
     };
     AppView.prototype.displaySearchResults = function() {
-      var item, items, li, location, locationHeader, locationName, locationNav, resultTypeItems, title, ul, _ref, _results;
+      var item, items, li, location, locationHeader, locationName, locationNav, prices, resultType, ul, _i, _len, _ref;
       this.showSearchIcon();
+      prices = [];
       if (!this.lastSearch.result.items) {
         this.retryLastSearch();
       } else {
         this.retryCount = 0;
       }
+      this.clearItems();
       this.displaySection(this.lastSearch.type);
-      resultTypeItems = $('#' + this.lastSearch.type).children('.items');
+      resultType = $('#' + this.lastSearch.type).children('.items');
       locationNav = $('ul#locationNav');
-      $('#sidebar div.separator').removeClass('hidden');
-      $('<p>').text("Searching for '" + this.lastSearch.query + ".'").appendTo(resultTypeItems);
+      $('#locationSeparator').removeClass('hidden');
+      $('<p>').text("Searching for '" + this.lastSearch.query + ".'").appendTo(resultType);
       _ref = this.lastSearch.result.items;
-      _results = [];
       for (location in _ref) {
         items = _ref[location];
         locationName = this.locationsReversed[location];
@@ -422,32 +459,64 @@
           href: "#" + (encodeURIComponent(locationName)),
           title: locationName
         }).text(locationName).appendTo(li);
-        locationHeader.appendTo(resultTypeItems);
-        ul = $('<ul>').appendTo(resultTypeItems);
-        _results.push((function() {
-          var _i, _len, _results2;
-          if (items) {
-            _results2 = [];
-            for (_i = 0, _len = items.length; _i < _len; _i++) {
-              item = items[_i];
-              title = "" + item.date + " - " + item.desc + " " + item.location;
-              if (item.price) {
-                title = "" + title + " - $" + item.price;
-              }
-              li = $('<li>').appendTo(ul);
-              _results2.push($("<a>").attr({
-                href: item.link,
-                title: title,
-                target: "_blank"
-              }).text(title).appendTo(li));
-            }
-            return _results2;
-          } else {
-            return $("<p>").text("No results for this location.").appendTo(resultTypeItems);
+        locationHeader.appendTo(resultType);
+        ul = $('<ul>').appendTo(resultType);
+        for (_i = 0, _len = items.length; _i < _len; _i++) {
+          item = items[_i];
+          if (item.price) {
+            prices.push(item.price);
           }
-        })());
+          this.itemViews.push(new ItemView({
+            item: item,
+            ul: ul
+          }));
+        }
+        if (this.itemViews.length === 0) {
+          $("<p>").text("No results for this location.").appendTo(resultType);
+        }
       }
-      return _results;
+      if (prices.length > 0) {
+        return this.displayPrices(prices);
+      }
+    };
+    AppView.prototype.displayPrices = function(prices) {
+      var group, groupMax, groupName, i, li, min, price, priceCounts, priceGroups, priceNav, _i, _j, _len, _len2, _len3, _len4;
+      priceNav = $('ul#priceNav');
+      $('#priceSeparator').removeClass('hidden');
+      priceGroups = [0, _.min(prices), 25, 50, 250, 500, _.max(prices)];
+      priceCounts = {};
+      for (_i = 0, _len = priceGroups.length; _i < _len; _i++) {
+        group = priceGroups[_i];
+        priceCounts[group] = 0;
+      }
+      for (i = 0, _len2 = prices.length; i < _len2; i++) {
+        price = prices[i];
+        for (_j = 0, _len3 = priceGroups.length; _j < _len3; _j++) {
+          groupMax = priceGroups[_j];
+          if (price <= groupMax) {
+            priceCounts[groupMax] += 1;
+            break;
+          }
+        }
+      }
+      for (i = 0, _len4 = priceGroups.length; i < _len4; i++) {
+        price = priceGroups[i];
+        if (i === 0) {
+          continue;
+        }
+        min = priceGroups[i - 1];
+        groupName = "$" + min + " - $" + price + " (" + priceCounts[price] + ")";
+        li = $('<li>').appendTo(priceNav);
+        $('<a>').attr({
+          href: "/#/filter/" + min + "/" + price,
+          title: groupName
+        }).text(groupName).appendTo(li);
+      }
+      li = $('<li>').appendTo(priceNav);
+      return $('<a>').attr({
+        href: "/#/filter/all/all",
+        title: 'All'
+      }).text('All').appendTo(li);
     };
     AppView.prototype.setFormElements = function(locations, type, query) {
       var loc, _i, _len;
@@ -460,8 +529,9 @@
       $('#type').val(type);
       return $('#query').val(query);
     };
-    AppView.prototype.clearLocationNav = function() {
+    AppView.prototype.clearSidebar = function() {
       $('ul#locationNav li').remove();
+      $('ul#priceNav li').remove();
       return $('#sidebar div.separator').addClass('hidden');
     };
     AppView.prototype.clearSavedSearches = function() {
@@ -507,6 +577,16 @@
         return $("<p>").text("No past searches on record.").appendTo(history);
       }
     };
+    AppView.prototype.clearItems = function() {
+      var item, _i, _len, _ref;
+      _ref = this.itemViews;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        item = _ref[_i];
+        item.remove();
+        delete item;
+      }
+      return this.itemViews = [];
+    };
     AppView.prototype.displayKeyboardShortcuts = function() {
       return this.displaySection('keyboard-shortcuts');
     };
@@ -514,13 +594,13 @@
       return this.displaySection('welcome');
     };
     AppView.prototype.displaySection = function(sectionId) {
-      var listingDiv, resultDivs, sectionDiv, sectionItems;
-      listingDiv = $('#result-listing').removeClass('hidden');
-      resultDivs = $('#result-listing div.items');
+      var listingDiv, sectionDiv, sectionItems;
+      listingDiv = $('#result-listing');
+      listingDiv.removeClass('hidden');
       sectionDiv = $('#' + sectionId);
       sectionItems = sectionDiv.children('.items');
-      resultDivs.empty();
-      this.clearLocationNav();
+      $('#result-listing div.items').empty();
+      this.clearSidebar();
       $('#result-listing div').addClass('hidden');
       sectionDiv.removeClass('hidden');
       return sectionItems.removeClass('hidden');
@@ -532,6 +612,24 @@
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         l = _ref[_i];
         _results.push(l.replace('location=', ''));
+      }
+      return _results;
+    };
+    AppView.prototype.filter = function(options) {
+      var itemPrice, maxPrice, minPrice, view, _i, _len, _ref, _results;
+      if (options.minPrice === 'all') {
+        minPrice = 'all';
+        maxPrice = null;
+      } else {
+        minPrice = parseInt(options.minPrice);
+        maxPrice = parseInt(options.maxPrice);
+      }
+      _ref = this.itemViews;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        view = _ref[_i];
+        itemPrice = view.item.price;
+        _results.push(minPrice === 'all' || itemPrice >= minPrice && itemPrice <= maxPrice ? view.show() : view.hide());
       }
       return _results;
     };
@@ -550,7 +648,8 @@
       '': 'index',
       'search/:locations/:type/:query': 'search',
       'history': 'history',
-      'keyboard': 'keyboard'
+      'keyboard': 'keyboard',
+      'filter/:min/:max': 'filter'
     };
     Router.prototype.initialize = function(options) {
       return this.app = new AppView({
@@ -583,6 +682,12 @@
     };
     Router.prototype.keyboard = function() {
       return this.app.displayKeyboardShortcuts();
+    };
+    Router.prototype.filter = function(min, max) {
+      return this.app.filter({
+        minPrice: min,
+        maxPrice: max
+      });
     };
     return Router;
   })();
