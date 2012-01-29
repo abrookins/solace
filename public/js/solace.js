@@ -483,7 +483,7 @@
       var group, groupMax, groupName, i, li, min, price, priceCounts, priceGroups, priceNav, _i, _j, _len, _len2, _len3, _len4;
       priceNav = $('ul#priceNav');
       $('#priceSeparator').removeClass('hidden');
-      priceGroups = [0, _.min(prices), 25, 50, 250, 500, _.max(prices)];
+      priceGroups = [0, _.min(prices), 50, 250, 500, 1000, _.max(prices)];
       priceCounts = {};
       for (_i = 0, _len = priceGroups.length; _i < _len; _i++) {
         group = priceGroups[_i];

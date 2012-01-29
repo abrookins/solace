@@ -510,7 +510,7 @@ class AppView extends Backbone.View
 
     # TODO: Partition `prices` with e.g., _.groupBy, instead of using fixed
     # groups.
-    priceGroups = [0, _.min(prices), 25, 50, 250, 500, _.max(prices)]
+    priceGroups = [0, _.min(prices), 50, 250, 500, 1000, _.max(prices)]
     priceCounts = {}
     priceCounts[group] = 0 for group in priceGroups
 
