@@ -425,7 +425,7 @@
               li = $('<li>').appendTo(ul);
               _results2.push($("<a>").attr({
                 href: item.link,
-                title: title,
+                title: decodeURI(title),
                 target: "_blank"
               }).text(title).appendTo(li));
             }

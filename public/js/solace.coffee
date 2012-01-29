@@ -431,7 +431,7 @@ class AppView extends Backbone.View
 
           $("<a>").attr({
             href: item.link,
-            title: title
+            title: decodeURI(title)
             target: "_blank"
           }).text(title).appendTo(li)
       else

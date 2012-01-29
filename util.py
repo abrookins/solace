@@ -4,56 +4,136 @@ import requests
 from BeautifulSoup import BeautifulSoup
 
 
-def extract_results(raw_results):
-    """
-    Extra data about a single Craiglist search result from HTML into a dict,
-    using BeautifulSoup.
-    """
-    results = []
+_extractor_registry = {}
 
+
+def register_extractor(*args):
+    """
+    Register `fn` as an extractor for string arguments.
+    Arguments should be Craiglist search categories like 'sss' or 'jjj'.
+    """
+    def decorator(fn):
+        for category in args:
+            _extractor_registry[category] = fn
+        def inner_function(*args, **kwargs):
+            fn(*args, **kwargs)
+        return inner_function
+    return decorator
+
+
+def get_extractor(category):
+    """ Get the extractor function for `category` (string). """
+    fn = _extractor_registry.get(category, None)
+
+    if fn == None:
+        fn = _extractor_registry.get('default')
+
+    return fn
+
+
+def get_price(el):
+    """
+    Try to extract a price from a Craiglist `el` (BeautifulSoup element).
+    """
     money = re.compile('|'.join([
       r'^\$?(\d*\.\d{1,2})$',
       r'^\$?(\d+)$',
       r'^\$(\d+\.?)$',
     ]))
 
+    price_str = el.strip()
+    matches = money.match(price_str)
+    price = matches and matches.group(0) or None
+    
+    if price:
+        return float(price[1:])
+
+
+@register_extractor('default', 'sss')
+def extract_item_for_sale(item):
+    """ Extract a Craigslist item for sale. """
+    result = {}
+    result['image'] = item.contents[1].get('id')
+    result['date'] = item.contents[2].strip().rstrip('- ')
+    result['link'] = item.contents[3].get('href')
+    result['desc'] = item.contents[3].text
+    result['location'] = item.contents[5].string
+
+    price = get_price(item.contents[4])
+
+    if price:
+        result['price'] = price
+
+    return result
+
+
+@register_extractor('jjj', 'ggg', 'bbb')
+def extract_job(item):
+    """ Extra a job posting. """
+    result = {}
+    result['date'] = item.contents[0].strip().rstrip('- ')
+    result['link'] = item.contents[1].get('href')
+    result['desc'] = item.contents[1].text
+    result['location'] = item.contents[3].text
+
+    category = item.find('small')
+
+    if category:
+        result['category'] = category.text
+
+    return result 
+
+
+@register_extractor('hhh')
+def extract_housing(item):
+    """ Extract a house or rental item. """
+    result = {}
+
+    if '/' in item.contents[1]:
+        # This line splits a string like this:
+        # '$1425 / 3br - 1492ft - Beautiful Sherwood Home Could Be Yours, Move in March 1st'
+        # Into:
+        # ['3br', '1292ft', 'Beautiful...']
+        rental_details = item.contents[1].text.split('/')[1].split('-')
+        result['bedrooms'] = rental_details[0].strip()
+        result['sqft'] = rental_details[1].strip()
+        result['desc'] = rental_details[2].strip()
+    else:
+        result['desc'] = item.contents[1].text.strip()
+
+    result['link'] = item.contents[1].get('href')
+    result['date'] = item.contents[0].strip().rstrip('- ')
+    result['location'] = item.contents[3].text
+
+    small = item.find('small')
+    if small:
+        result['type'] = small.text
+
+    price = get_price(item.contents[1].text)
+
+    if price:
+        result['price'] = price
+
+    return result
+
+
+def extract_results(raw_results, category):
+    """
+    Extract data about a single Craiglist search result from HTML into a dict,
+    using BeautifulSoup.
+    """
+    results = []
+
     for el in raw_results.nextGenerator():
         if not hasattr(el, 'name') or el.name == 'h4':
             continue
 
         if el.name == 'p':
-            result = {}
-
-            # Items for sale            
-            if el.get('class') == 'row':
-                result['image'] = el.contents[1].get('id')
-                result['date'] = el.contents[2].strip().rstrip('- ')
-                result['link'] = el.contents[3].get('href')
-                result['desc'] = el.contents[3].text
-                result['location'] = el.contents[5].string
-
-                # Try to parse the price.
-                #price_str = el.contents[4].split('-')[1].strip()
-                price_str = el.contents[4].strip()
-                matches = money.match(price_str)
-                price = matches and matches.group(0) or None
-
-                if price:
-                    result['price'] = float(price[1:])
-            else:
-                result['date'] = el.contents[0].strip().rstrip('- ')
-                result['link'] = el.contents[1].get('href')
-                result['desc'] = el.contents[1].text
-                result['location'] = el.contents[3].text
-
-                category = el.find('small')
-
-                if category:
-                    result['category'] = category.text
-
-            results.append(result)
+            extractor = get_extractor(category)
+            results.append(extractor(el))
 
     return results
+
 
 def search_craigslist(location, category, query):
     """
@@ -65,10 +145,11 @@ def search_craigslist(location, category, query):
     search_url = '%ssearch/%s?query=%s&srchType=A' % (
         location, category, query)
 
-    content = BeautifulSoup(requests.get(search_url).text)
+    content = BeautifulSoup(
+        requests.get(search_url).text, convertEntities=BeautifulSoup.HTML_ENTITIES)
 
     for raw_results in content.findAll('h4'):
-        results = results + (extract_results(raw_results))
+        results = results + extract_results(raw_results, category)
 
     return results
 
