@@ -148,8 +148,11 @@ def search_craigslist(location, category, query):
     content = BeautifulSoup(
         requests.get(search_url).text, convertEntities=BeautifulSoup.HTML_ENTITIES)
 
+    print content
+
     for raw_results in content.findAll('h4'):
         results = results + extract_results(raw_results, category)
+        print results
 
     return results
 

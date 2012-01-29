@@ -133,7 +133,11 @@ class Craigslist extends Backbone.Model
   buildQueryUrl: (locationNames, type, query) ->
     locationQuery = @buildQueryString('location', locationNames)
     typeQuery = @buildQueryString('type', [type])
-    encodedQuery = encodeURIComponent(query)
+
+    # Craigslist expects spaces to be encoded with '+' because this data
+    # supposedly comes from a form on their site.
+    encodedQuery = encodeURIComponent(query.replace(' ', '+'))
+
     return "#{@baseUrl}?#{locationQuery}&#{typeQuery}&q=#{encodedQuery}"
 
   # Search Craigslist for a query in the chosen locations.
