@@ -419,7 +419,8 @@ class AppView extends Backbone.View
     @displaySection(@lastSearch.type)
     resultTypeItems = $('#'+@lastSearch.type).children('.items')
     locationNav = $('ul#locationNav')
-    locationNav.removeClass('hidden')
+    # Show the separator
+    $('#sidebar div.separator').removeClass('hidden')
 
     $('<p>').text("Searching for '#{@lastSearch.query}.'").appendTo(resultTypeItems)
 
@@ -476,7 +477,9 @@ class AppView extends Backbone.View
   # Clear any location nagivation links in the sidebar.
   clearLocationNav: ->
     $('ul#locationNav li').remove()
-    $('ul#locationNav').addClass('hidden')
+    # Hide the separator line
+    $('#sidebar div.separator').addClass('hidden')
+
 
   clearSavedSearches: =>
     historyDiv = $('#history')

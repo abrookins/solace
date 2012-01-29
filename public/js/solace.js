@@ -405,7 +405,7 @@
       this.displaySection(this.lastSearch.type);
       resultTypeItems = $('#' + this.lastSearch.type).children('.items');
       locationNav = $('ul#locationNav');
-      locationNav.removeClass('hidden');
+      $('#sidebar div.separator').removeClass('hidden');
       $('<p>').text("Searching for '" + this.lastSearch.query + ".'").appendTo(resultTypeItems);
       _ref = this.lastSearch.result.items;
       _results = [];
@@ -462,7 +462,7 @@
     };
     AppView.prototype.clearLocationNav = function() {
       $('ul#locationNav li').remove();
-      return $('ul#locationNav').addClass('hidden');
+      return $('#sidebar div.separator').addClass('hidden');
     };
     AppView.prototype.clearSavedSearches = function() {
       var historyDiv, historyItems, successDiv;

@@ -176,12 +176,16 @@ div#sidebar ul {
     padding-left: 40px;
 }
 
-ul#locationNav {
-    padding-top: 15px;
-}
-
 div#sidebar li {
     margin-bottom: 1em;
+}
+
+div.separator {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    margin-right: 30px;
+    margin-left: 10px;
+    border-bottom: 1px solid #EFEFEF;
 }
 
 div#content {
