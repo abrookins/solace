@@ -31,9 +31,9 @@ def get_extractor(category):
     return fn
 
 
-def get_price(el):
+def get_price(string):
     """
-    Try to extract a price from a BeautifulSoup element `el`.
+    Try to extract a price from `string`.
     """
     money = re.compile('|'.join([
       r'^\$?(\d*\.\d{1,2})$',
@@ -41,7 +41,7 @@ def get_price(el):
       r'^\$(\d+\.?)$',
     ]))
 
-    price_str = el.strip()
+    price_str = string.strip()
     matches = money.match(price_str)
     price = matches and matches.group(0) or None
     
@@ -89,15 +89,27 @@ def extract_housing(item):
     """ Extract a Craigslist house for sale or rental. """
     result = {}
 
-    if '/' in item.contents[1]:
-        # This line splits a string like this:
-        # '$1425 / 3br - 1492ft - Beautiful Sherwood Home Could Be Yours, Move in March 1st'
-        # Into:
-        # ['3br', '1292ft', 'Beautiful...']
-        rental_details = item.contents[1].text.split('/')[1].split('-')
-        result['bedrooms'] = rental_details[0].strip()
-        result['sqft'] = rental_details[1].strip()
-        result['desc'] = rental_details[2].strip()
+    # Isolate the price and details (bedrooms, square feet) from a title like:
+    # '$1425 / 3br - 1492ft - Beautiful Sherwood Home Could Be Yours, Move in March 1st'
+    if '/' in item.contents[1].text:
+        print item.contents[1]
+        parts = item.contents[1].text.split('/')
+        price = get_price(parts[0])
+
+        if price:
+            result['price'] = price
+
+        rental_details = parts[1].split('-')
+
+        for detail in rental_details:
+            detail = detail.strip()
+
+            if 'ft' in detail:
+                result['sqft'] = detail
+            elif 'br' in detail:
+                result['bedrooms'] = detail
+            else:
+                result['desc'] = detail
     else:
         result['desc'] = item.contents[1].text.strip()
 
@@ -108,11 +120,6 @@ def extract_housing(item):
     small = item.find('small')
     if small:
         result['type'] = small.text
-
-    price = get_price(item.contents[1].text)
-
-    if price:
-        result['price'] = price
 
     return result
 
