@@ -597,8 +597,8 @@
       }
       return this.itemViews = [];
     };
-    AppView.prototype.displayKeyboardShortcuts = function() {
-      return this.displaySection('keyboard-shortcuts');
+    AppView.prototype.displayHelp = function() {
+      return this.displaySection('help');
     };
     AppView.prototype.displayIndex = function() {
       return this.displaySection('welcome');
@@ -648,7 +648,7 @@
   Router = (function() {
     __extends(Router, Backbone.Router);
     function Router() {
-      this.keyboard = __bind(this.keyboard, this);
+      this.help = __bind(this.help, this);
       this.history = __bind(this.history, this);
       this.search = __bind(this.search, this);
       this.index = __bind(this.index, this);
@@ -658,7 +658,7 @@
       '': 'index',
       'search/:locations/:type/:query': 'search',
       'history': 'history',
-      'keyboard': 'keyboard',
+      'help': 'help',
       'filter/:min/:max': 'filter'
     };
     Router.prototype.initialize = function(options) {
@@ -690,8 +690,8 @@
         }, this));
       }
     };
-    Router.prototype.keyboard = function() {
-      return this.app.displayKeyboardShortcuts();
+    Router.prototype.help = function() {
+      return this.app.displayHelp();
     };
     Router.prototype.filter = function(min, max) {
       return this.app.filter({

@@ -608,8 +608,8 @@ class AppView extends Backbone.View
 
     @itemViews = []
 
-  displayKeyboardShortcuts: ->
-    @displaySection('keyboard-shortcuts')
+  displayHelp: ->
+    @displaySection('help')
 
   displayIndex: ->
     @displaySection('welcome')
@@ -666,7 +666,7 @@ class Router extends Backbone.Router
     '': 'index'
     'search/:locations/:type/:query': 'search'
     'history': 'history'
-    'keyboard': 'keyboard'
+    'help': 'help'
     'filter/:min/:max': 'filter'
 
   initialize: (options) ->
@@ -701,9 +701,9 @@ class Router extends Backbone.Router
       @app.bind('initComplete', () =>
         @app.displaySavedSearches())
 
-  # Show keyboard shortcuts.
-  keyboard: =>
-    @app.displayKeyboardShortcuts()
+  # Show help page.
+  help: =>
+    @app.displayHelp()
 
   # Filter search results by `price`.
   filter: (min, max) ->
