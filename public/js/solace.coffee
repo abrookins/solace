@@ -499,18 +499,22 @@ class AppView extends Backbone.View
         $("<p>").text("No results for this location.").appendTo(resultType)
 
     if prices.length > 0
-      @displayPrices(prices)
+      @displayPriceGroups(prices)
 
-  # Display price ranges given an array of numbers, `prices`.
-  displayPrices: (prices) ->
+  # Display price groups given an array of numbers, `prices`.
+  displayPriceGroups: (prices) ->
     priceNav = $('ul#priceNav')
+    minPrice = _.min(prices)
 
     # Show the price separator
     $('#priceSeparator').removeClass('hidden')
 
     # TODO: Partition `prices` with e.g., _.groupBy, instead of using fixed
     # groups.
-    priceGroups = [0, _.min(prices), 50, 250, 500, 1000, _.max(prices)]
+    priceGroups = [0, minPrice]
+    for group in [50, 250, 500, 1000, _.max(prices)]
+      if group > minPrice then priceGroups.push(group) else continue
+
     priceCounts = {}
     priceCounts[group] = 0 for group in priceGroups
 
@@ -521,7 +525,7 @@ class AppView extends Backbone.View
           break
 
     for price, i in priceGroups
-      if i == 0
+      if i == 0 or priceCounts[price] == 0
         continue
 
       min = priceGroups[i-1]

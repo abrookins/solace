@@ -476,32 +476,42 @@
         }
       }
       if (prices.length > 0) {
-        return this.displayPrices(prices);
+        return this.displayPriceGroups(prices);
       }
     };
-    AppView.prototype.displayPrices = function(prices) {
-      var group, groupMax, groupName, i, li, min, price, priceCounts, priceGroups, priceNav, _i, _j, _len, _len2, _len3, _len4;
+    AppView.prototype.displayPriceGroups = function(prices) {
+      var group, groupMax, groupName, i, li, min, minPrice, price, priceCounts, priceGroups, priceNav, _i, _j, _k, _len, _len2, _len3, _len4, _len5, _ref;
       priceNav = $('ul#priceNav');
+      minPrice = _.min(prices);
       $('#priceSeparator').removeClass('hidden');
-      priceGroups = [0, _.min(prices), 50, 250, 500, 1000, _.max(prices)];
+      priceGroups = [0, minPrice];
+      _ref = [50, 250, 500, 1000, _.max(prices)];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        group = _ref[_i];
+        if (group > minPrice) {
+          priceGroups.push(group);
+        } else {
+          continue;
+        }
+      }
       priceCounts = {};
-      for (_i = 0, _len = priceGroups.length; _i < _len; _i++) {
-        group = priceGroups[_i];
+      for (_j = 0, _len2 = priceGroups.length; _j < _len2; _j++) {
+        group = priceGroups[_j];
         priceCounts[group] = 0;
       }
-      for (i = 0, _len2 = prices.length; i < _len2; i++) {
+      for (i = 0, _len3 = prices.length; i < _len3; i++) {
         price = prices[i];
-        for (_j = 0, _len3 = priceGroups.length; _j < _len3; _j++) {
-          groupMax = priceGroups[_j];
+        for (_k = 0, _len4 = priceGroups.length; _k < _len4; _k++) {
+          groupMax = priceGroups[_k];
           if (price <= groupMax) {
             priceCounts[groupMax] += 1;
             break;
           }
         }
       }
-      for (i = 0, _len4 = priceGroups.length; i < _len4; i++) {
+      for (i = 0, _len5 = priceGroups.length; i < _len5; i++) {
         price = priceGroups[i];
-        if (i === 0) {
+        if (i === 0 || priceCounts[price] === 0) {
           continue;
         }
         min = priceGroups[i - 1];
