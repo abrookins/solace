@@ -387,6 +387,12 @@ class AppView extends Backbone.View
   # binds to the object's 'searchFinished' event, so the AppView can refresh
   # when it has results.
   search: (locations, type, query) =>
+    # Perform the search immediately if the app view is loaded. Otherwise, bind
+    # to initComplete and search when initialization has finished.
+    if not @initComplete
+      @bind('initComplete', () => @search(locations, type, query))
+      return
+
     @setFormElements(locations, type, query)
     @showLoadingIcon()
     locationUrls = @getLocationUrls(locations)
@@ -407,7 +413,8 @@ class AppView extends Backbone.View
     else
       alert('Oops, we could not complete the search! Try again later.')
 
-  # Build an internal search URL given criteria.
+  # Build a search URL given criteria a query string, an array of locations and
+  # a string representing the Craigslist search type, e.g., 'jjj'
   buildSearchUrl: (query, locations, type) ->
     encodedQuery = encodeURIComponent(query)
     encodedLocations = encodeURIComponent(locations.join('&'))
@@ -505,6 +512,9 @@ class AppView extends Backbone.View
   displayPriceGroups: (prices) ->
     priceNav = $('ul#priceNav')
     minPrice = _.min(prices)
+    locations = @getLocationNamesForUrls(@lastSearch.locations)
+    locationQuery = encodeURIComponent(locations.join('&'))
+    search = "#{locationQuery}/#{@lastSearch.type}/#{@lastSearch.query}"
 
     # Show the price separator
     $('#priceSeparator').removeClass('hidden')
@@ -522,7 +532,7 @@ class AppView extends Backbone.View
 
     for price, i in prices
       for groupMax in priceGroups
-        if price <= groupMax
+        if price < groupMax
           priceCounts[groupMax] += 1
           break
 
@@ -535,15 +545,14 @@ class AppView extends Backbone.View
       li = $('<li>').appendTo(priceNav)
 
       $('<a>').attr({
-        href: "/#/filter/#{min}/#{price}",
+        href: "/#/filter/#{min}/#{price}/#{search}",
         title: groupName,
       }).text(groupName).appendTo(li)
 
-    # TODO: Make a list+link factory function.
     li = $('<li>').appendTo(priceNav)
 
     $('<a>').attr({
-      href: "/#/filter/all/all",
+      href: "/#/filter/all/all/#{search}",
       title: 'All',
     }).text('All').appendTo(li)
 
@@ -577,8 +586,22 @@ class AppView extends Backbone.View
     historyItems.empty()
     @craigslist.clearSearchCache()
 
+  # Transform the URL of the location into a human-readable location name.
+  getLocationNamesForUrls: (locationUrls) ->
+    return (@locationsReversed[url] for url in locationUrls)
+
+  # Build a search URL used internally by the front-end app for navigation and
+  # caching purposes from an existing SearchResult object `search`.
+  buildUrlForExistingSearch: (search) ->
+    locations = @getLocationNamesForUrls(search.locations)
+    return '/#'+@buildSearchUrl(search.query, locations, search.type)
+
   # Show a list of the user's past searches and let them reopen a search.
   displaySavedSearches: ->
+    if not @initComplete
+      @bind('initComplete', () => @displaySavedSearches())
+      return
+
     savedSearches = @craigslist.getCachedSearches()
     historyItems = $('#history').children('.items')
 
@@ -589,11 +612,11 @@ class AppView extends Backbone.View
 
       for url, search of savedSearches
         li = $('<li>').appendTo(ol)
-        # Transform the URL of the location into a human-readable location name.
-        locations = ("#{@locationsReversed[loc]}" for loc in search.locations)
+        locations = @getLocationNamesForUrls(search.locations)
         type = $('#'+search.type).children('h2').text()
         title = "#{type} matching '#{search.query}' in: #{locations.join('; ')}"
-        url = '/#'+@buildSearchUrl(search.query, locations, search.type)
+        url = @buildUrlForExistingSearch(search)
+
         $("<a>").attr({
           href: url,
           title: title
@@ -654,7 +677,7 @@ class AppView extends Backbone.View
     for view in @itemViews
       itemPrice = view.item.price
 
-      if minPrice == 'all' or itemPrice >= minPrice and itemPrice <= maxPrice 
+      if minPrice == 'all' or itemPrice >= minPrice and itemPrice < maxPrice 
         view.show()
       else
         view.hide()
@@ -669,7 +692,7 @@ class Router extends Backbone.Router
     'search/:locations/:type/:query': 'search'
     'history': 'history'
     'help': 'help'
-    'filter/:min/:max': 'filter'
+    'filter/:min/:max/:locations/:type/:query': 'filter'
 
   initialize: (options) ->
     @app = new AppView
@@ -684,31 +707,24 @@ class Router extends Backbone.Router
   # Multiple locations are specified as 'location=locationName' in the URI, so
   # first we split the parameters of the search and create an array of location
   # names.
-  search: (locations, type, query) =>
-    parsed_locations = @app.parseSearchLocations(locations)
-
-    # Perform the search immediately if the app view is loaded. Otherwise, bind
-    # to initComplete and search when initialization has finished.
-    if @app.initComplete
-      @app.search(parsed_locations, type, query)
-    else
-      @app.bind('initComplete', () =>
-        @app.search(parsed_locations, type, query))
+  search: (locationQuery, type, query) =>
+    parsedLocations = @app.parseSearchLocations(locationQuery)
+    @app.search(parsedLocations, type, query)
 
   # Show list of past searches.
   history: =>
-    if @app.initComplete
-      @app.displaySavedSearches()
-    else
-      @app.bind('initComplete', () =>
-        @app.displaySavedSearches())
+    @app.displaySavedSearches()
 
   # Show help page.
   help: =>
     @app.displayHelp()
 
   # Filter search results by `price`.
-  filter: (min, max) ->
+  filter: (min, max, locations, type, query) ->
+    # Search using the given parameters if a search isn't in progress.
+    if not @app.lastSearch
+      @search(locations, type, query)
+
     @app.filter(
       minPrice: min
       maxPrice: max

@@ -386,6 +386,12 @@
     };
     AppView.prototype.search = function(locations, type, query) {
       var locationUrls;
+      if (!this.initComplete) {
+        this.bind('initComplete', __bind(function() {
+          return this.search(locations, type, query);
+        }, this));
+        return;
+      }
       this.setFormElements(locations, type, query);
       this.showLoadingIcon();
       locationUrls = this.getLocationUrls(locations);
@@ -480,9 +486,12 @@
       }
     };
     AppView.prototype.displayPriceGroups = function(prices) {
-      var availableGroups, group, groupMax, groupName, i, li, min, minPrice, price, priceCounts, priceGroups, priceNav, _i, _j, _k, _len, _len2, _len3, _len4, _len5;
+      var availableGroups, group, groupMax, groupName, i, li, locationQuery, locations, min, minPrice, price, priceCounts, priceGroups, priceNav, search, _i, _j, _k, _len, _len2, _len3, _len4, _len5;
       priceNav = $('ul#priceNav');
       minPrice = _.min(prices);
+      locations = this.getLocationNamesForUrls(this.lastSearch.locations);
+      locationQuery = encodeURIComponent(locations.join('&'));
+      search = "" + locationQuery + "/" + this.lastSearch.type + "/" + this.lastSearch.query;
       $('#priceSeparator').removeClass('hidden');
       priceGroups = [];
       availableGroups = [0, minPrice, 50, 250, 500, 1000, 2000, 5000, 20000, 50000, 100000, 150000, 200000, 400000, 600000, 1000000, _.max(prices)];
@@ -503,7 +512,7 @@
         price = prices[i];
         for (_k = 0, _len4 = priceGroups.length; _k < _len4; _k++) {
           groupMax = priceGroups[_k];
-          if (price <= groupMax) {
+          if (price < groupMax) {
             priceCounts[groupMax] += 1;
             break;
           }
@@ -518,13 +527,13 @@
         groupName = "$" + min + " - $" + price + " (" + priceCounts[price] + ")";
         li = $('<li>').appendTo(priceNav);
         $('<a>').attr({
-          href: "/#/filter/" + min + "/" + price,
+          href: "/#/filter/" + min + "/" + price + "/" + search,
           title: groupName
         }).text(groupName).appendTo(li);
       }
       li = $('<li>').appendTo(priceNav);
       return $('<a>').attr({
-        href: "/#/filter/all/all",
+        href: "/#/filter/all/all/" + search,
         title: 'All'
       }).text('All').appendTo(li);
     };
@@ -553,8 +562,28 @@
       historyItems.empty();
       return this.craigslist.clearSearchCache();
     };
+    AppView.prototype.getLocationNamesForUrls = function(locationUrls) {
+      var url, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = locationUrls.length; _i < _len; _i++) {
+        url = locationUrls[_i];
+        _results.push(this.locationsReversed[url]);
+      }
+      return _results;
+    };
+    AppView.prototype.buildUrlForExistingSearch = function(search) {
+      var locations;
+      locations = this.getLocationNamesForUrls(search.locations);
+      return '/#' + this.buildSearchUrl(search.query, locations, search.type);
+    };
     AppView.prototype.displaySavedSearches = function() {
-      var historyItems, li, loc, locations, ol, savedSearches, search, title, type, url, _results;
+      var historyItems, li, locations, ol, savedSearches, search, title, type, url, _results;
+      if (!this.initComplete) {
+        this.bind('initComplete', __bind(function() {
+          return this.displaySavedSearches();
+        }, this));
+        return;
+      }
       savedSearches = this.craigslist.getCachedSearches();
       historyItems = $('#history').children('.items');
       this.displaySection('history');
@@ -564,19 +593,10 @@
         for (url in savedSearches) {
           search = savedSearches[url];
           li = $('<li>').appendTo(ol);
-          locations = (function() {
-            var _i, _len, _ref, _results2;
-            _ref = search.locations;
-            _results2 = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              loc = _ref[_i];
-              _results2.push("" + this.locationsReversed[loc]);
-            }
-            return _results2;
-          }).call(this);
+          locations = this.getLocationNamesForUrls(search.locations);
           type = $('#' + search.type).children('h2').text();
           title = "" + type + " matching '" + search.query + "' in: " + (locations.join('; '));
-          url = '/#' + this.buildSearchUrl(search.query, locations, search.type);
+          url = this.buildUrlForExistingSearch(search);
           _results.push($("<a>").attr({
             href: url,
             title: title
@@ -639,7 +659,7 @@
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         view = _ref[_i];
         itemPrice = view.item.price;
-        _results.push(minPrice === 'all' || itemPrice >= minPrice && itemPrice <= maxPrice ? view.show() : view.hide());
+        _results.push(minPrice === 'all' || itemPrice >= minPrice && itemPrice < maxPrice ? view.show() : view.hide());
       }
       return _results;
     };
@@ -659,7 +679,7 @@
       'search/:locations/:type/:query': 'search',
       'history': 'history',
       'help': 'help',
-      'filter/:min/:max': 'filter'
+      'filter/:min/:max/:locations/:type/:query': 'filter'
     };
     Router.prototype.initialize = function(options) {
       return this.app = new AppView({
@@ -670,30 +690,21 @@
     Router.prototype.index = function() {
       return this.app.displayIndex();
     };
-    Router.prototype.search = function(locations, type, query) {
-      var parsed_locations;
-      parsed_locations = this.app.parseSearchLocations(locations);
-      if (this.app.initComplete) {
-        return this.app.search(parsed_locations, type, query);
-      } else {
-        return this.app.bind('initComplete', __bind(function() {
-          return this.app.search(parsed_locations, type, query);
-        }, this));
-      }
+    Router.prototype.search = function(locationQuery, type, query) {
+      var parsedLocations;
+      parsedLocations = this.app.parseSearchLocations(locationQuery);
+      return this.app.search(parsedLocations, type, query);
     };
     Router.prototype.history = function() {
-      if (this.app.initComplete) {
-        return this.app.displaySavedSearches();
-      } else {
-        return this.app.bind('initComplete', __bind(function() {
-          return this.app.displaySavedSearches();
-        }, this));
-      }
+      return this.app.displaySavedSearches();
     };
     Router.prototype.help = function() {
       return this.app.displayHelp();
     };
-    Router.prototype.filter = function(min, max) {
+    Router.prototype.filter = function(min, max, locations, type, query) {
+      if (!this.app.lastSearch) {
+        this.search(locations, type, query);
+      }
       return this.app.filter({
         minPrice: min,
         maxPrice: max
