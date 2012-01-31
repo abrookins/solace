@@ -509,10 +509,12 @@ class AppView extends Backbone.View
     # Show the price separator
     $('#priceSeparator').removeClass('hidden')
 
-    # TODO: Partition `prices` with e.g., _.groupBy, instead of using fixed
-    # groups.
-    priceGroups = [0, minPrice]
-    for group in [50, 250, 500, 1000, _.max(prices)]
+    priceGroups = []
+    availableGroups = [0, minPrice, 50, 250, 500, 1000, 2000, 5000, 20000,
+                       50000, 100000, 150000, 200000, 400000, 600000, 1000000,
+                       _.max(prices)]
+
+    for group in availableGroups
       if group > minPrice then priceGroups.push(group) else continue
 
     priceCounts = {}

@@ -480,14 +480,14 @@
       }
     };
     AppView.prototype.displayPriceGroups = function(prices) {
-      var group, groupMax, groupName, i, li, min, minPrice, price, priceCounts, priceGroups, priceNav, _i, _j, _k, _len, _len2, _len3, _len4, _len5, _ref;
+      var availableGroups, group, groupMax, groupName, i, li, min, minPrice, price, priceCounts, priceGroups, priceNav, _i, _j, _k, _len, _len2, _len3, _len4, _len5;
       priceNav = $('ul#priceNav');
       minPrice = _.min(prices);
       $('#priceSeparator').removeClass('hidden');
-      priceGroups = [0, minPrice];
-      _ref = [50, 250, 500, 1000, _.max(prices)];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        group = _ref[_i];
+      priceGroups = [];
+      availableGroups = [0, minPrice, 50, 250, 500, 1000, 2000, 5000, 20000, 50000, 100000, 150000, 200000, 400000, 600000, 1000000, _.max(prices)];
+      for (_i = 0, _len = availableGroups.length; _i < _len; _i++) {
+        group = availableGroups[_i];
         if (group > minPrice) {
           priceGroups.push(group);
         } else {
