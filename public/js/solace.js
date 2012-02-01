@@ -604,6 +604,7 @@
     };
     AppView.prototype.clearSidebar = function() {
       $('ul#locationNav li').remove();
+      $('ul#roomNav li').remove();
       $('ul#priceNav li').remove();
       $('ul#resetNav li').remove();
       return $('#sidebar div.separator').addClass('hidden');

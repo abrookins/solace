@@ -640,6 +640,7 @@ class AppView extends Backbone.View
   # Clear location and price links and separator lines in the sidebar.
   clearSidebar: ->
     $('ul#locationNav li').remove()
+    $('ul#roomNav li').remove()
     $('ul#priceNav li').remove()
     $('ul#resetNav li').remove()
     # Hide any separator lines
@@ -712,7 +713,6 @@ class AppView extends Backbone.View
     # of div.items manually. TODO: Fix this.
     $('#result-listing div.items').empty()
 
-    # Clear the sidebar
     @clearSidebar()
 
     # Hide divs other than the chosen section div.
