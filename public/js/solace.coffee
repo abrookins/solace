@@ -6,11 +6,10 @@
 # FAQ](http://documentcloud.github.com/backbone/#FAQ-mvc) for an explanation of
 # *views* in Backbone.js versus in traditional MVC).
 #
-# The back-end is a Flask service that parses available locations from
-# Craigslist.
+# The back-end is a Flask service that parses search results from Craigslist.
 #
 # Full source code for the app is on
-# [Github](https://github.com/abrookins/solace).
+# [Github](https://github.com/abrookins/solace_python).
 
 
 # Create a global namespace for the app.
