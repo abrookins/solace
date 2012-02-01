@@ -411,11 +411,22 @@
         return alert('Oops, we could not complete the search! Try again later.');
       }
     };
-    AppView.prototype.buildSearchUrl = function(query, locations, type) {
-      var encodedLocations, encodedQuery;
-      encodedQuery = encodeURIComponent(query);
+    AppView.prototype.buildUrlForExistingSearch = function(search) {
+      var locations;
+      locations = this.getLocationNamesForUrls(search.locations);
+      return '/#' + this.buildSearchUrl(locations, search.type, search.query);
+    };
+    AppView.prototype.buildSearchUrlFragment = function(locations, type, query) {
+      var encodedLocations, encodedQuery, encodedType;
+      encodedType = encodeURIComponent(type);
       encodedLocations = encodeURIComponent(locations.join('&'));
-      return "/search/" + encodedLocations + "/" + type + "/" + encodedQuery;
+      encodedQuery = encodeURIComponent(query);
+      return "" + encodedLocations + "/" + encodedType + "/" + encodedQuery;
+    };
+    AppView.prototype.buildSearchUrl = function(locations, type, query) {
+      var searchFragment;
+      searchFragment = this.buildSearchUrlFragment(locations, type, query);
+      return "/search/" + searchFragment;
     };
     AppView.prototype.handleSearchClick = function(event) {
       var locations, query, searchUrl, type;
@@ -426,7 +437,7 @@
       if (query && type && locations.length > 0) {
         this.hideSearchDropdown();
         $('ul.ui-autocomplete').hide();
-        searchUrl = this.buildSearchUrl(query, locations, type);
+        searchUrl = this.buildSearchUrl(locations, type, query);
         return this.router.navigate(searchUrl);
       }
     };
@@ -437,9 +448,10 @@
       }
     };
     AppView.prototype.displaySearchResults = function() {
-      var item, items, li, location, locationHeader, locationName, locationNav, prices, resultType, ul, _i, _len, _ref;
+      var item, items, li, location, locationHeader, locationName, locationNav, prices, resultType, rooms, ul, _i, _len, _ref;
       this.showSearchIcon();
       prices = [];
+      rooms = [];
       if (!this.lastSearch.result.items) {
         this.retryLastSearch();
       } else {
@@ -472,6 +484,9 @@
           if (item.price) {
             prices.push(item.price);
           }
+          if (item.bedrooms) {
+            rooms.push(item.bedrooms);
+          }
           this.itemViews.push(new ItemView({
             item: item,
             ul: ul
@@ -482,60 +497,94 @@
         }
       }
       if (prices.length > 0) {
-        return this.displayPriceGroups(prices);
+        this.displayPriceFacet(prices);
+      }
+      if (rooms.length > 0) {
+        return this.displayRoomCountFacet(rooms);
       }
     };
-    AppView.prototype.displayPriceGroups = function(prices) {
-      var availableGroups, group, groupMax, groupName, i, li, locationQuery, locations, min, minPrice, price, priceCounts, priceGroups, priceNav, search, _i, _j, _k, _len, _len2, _len3, _len4, _len5;
-      priceNav = $('ul#priceNav');
-      minPrice = _.min(prices);
-      locations = this.getLocationNamesForUrls(this.lastSearch.locations);
-      locationQuery = encodeURIComponent(locations.join('&'));
-      search = "" + locationQuery + "/" + this.lastSearch.type + "/" + this.lastSearch.query;
-      $('#priceSeparator').removeClass('hidden');
-      priceGroups = [];
-      availableGroups = [0, minPrice, 50, 250, 500, 1000, 2000, 5000, 20000, 50000, 100000, 150000, 200000, 400000, 600000, 1000000, _.max(prices)];
+    AppView.prototype.getFacetCounts = function(availableGroups, values) {
+      var counts, group, groupUpperBound, groups, i, max, min, val, _i, _j, _k, _len, _len2, _len3, _len4;
+      groups = [0];
+      min = _.min(values);
+      max = _.max(values);
+      availableGroups.unshift(min);
+      availableGroups.push(max);
       for (_i = 0, _len = availableGroups.length; _i < _len; _i++) {
         group = availableGroups[_i];
-        if (group > minPrice) {
-          priceGroups.push(group);
+        if (group > min) {
+          groups.push(group);
         } else {
           continue;
         }
       }
-      priceCounts = {};
-      for (_j = 0, _len2 = priceGroups.length; _j < _len2; _j++) {
-        group = priceGroups[_j];
-        priceCounts[group] = 0;
+      counts = {};
+      for (_j = 0, _len2 = groups.length; _j < _len2; _j++) {
+        group = groups[_j];
+        counts[group] = 0;
       }
-      for (i = 0, _len3 = prices.length; i < _len3; i++) {
-        price = prices[i];
-        for (_k = 0, _len4 = priceGroups.length; _k < _len4; _k++) {
-          groupMax = priceGroups[_k];
-          if (price < groupMax) {
-            priceCounts[groupMax] += 1;
+      for (i = 0, _len3 = values.length; i < _len3; i++) {
+        val = values[i];
+        for (_k = 0, _len4 = groups.length; _k < _len4; _k++) {
+          groupUpperBound = groups[_k];
+          if (val < groupUpperBound) {
+            counts[groupUpperBound] += 1;
             break;
           }
         }
       }
-      for (i = 0, _len5 = priceGroups.length; i < _len5; i++) {
-        price = priceGroups[i];
-        if (i === 0 || priceCounts[price] === 0) {
+      return counts;
+    };
+    AppView.prototype.buildLink = function(href, text) {
+      return $('<a>').attr({
+        href: href,
+        title: text
+      }).text(text);
+    };
+    AppView.prototype.displayRoomCountFacet = function(rooms) {
+      var i, li, linkText, locationNames, min, roomCounts, roomNav, roomUpperBounds, search, upperBound, _len;
+      roomNav = $('ul#roomNav');
+      locationNames = this.getLocationNamesForUrls(this.lastSearch.locations);
+      search = this.buildSearchUrlFragment(locationNames, this.lastSearch.type, this.lastSearch.query);
+      roomCounts = this.getFacetCounts([1, 2, 3, 4, 5], rooms);
+      roomUpperBounds = _.keys(roomCounts);
+      console.log(rooms, roomCounts, roomUpperBounds);
+      $('#roomSeparator').removeClass('hidden');
+      for (i = 0, _len = roomUpperBounds.length; i < _len; i++) {
+        upperBound = roomUpperBounds[i];
+        if (upperBound === 0 || roomCounts[upperBound] === 0) {
           continue;
         }
-        min = priceGroups[i - 1];
-        groupName = "$" + min + " - $" + price + " (" + priceCounts[price] + ")";
+        min = roomUpperBounds[i - 1];
+        linkText = "" + min + "br - " + upperBound + "br (" + roomCounts[upperBound] + ")";
+        li = $('<li>').appendTo(roomNav);
+        this.buildLink("/#/filter/bedrooms/" + min + "/" + upperBound + "/" + search, linkText).appendTo(li);
+      }
+      li = $('<li>').appendTo(roomNav);
+      return this.buildLink("/#/filter/all/all/" + search, 'All').appendTo(li);
+    };
+    AppView.prototype.displayPriceFacet = function(prices) {
+      var availablePriceGroups, i, li, linkText, locationNames, min, minPrice, priceCounts, priceNav, priceUpperBounds, search, upperBound, _len;
+      priceNav = $('ul#priceNav');
+      minPrice = _.min(prices);
+      locationNames = this.getLocationNamesForUrls(this.lastSearch.locations);
+      search = this.buildSearchUrlFragment(locationNames, this.lastSearch.type, this.lastSearch.query);
+      availablePriceGroups = [50, 250, 500, 1000, 2000, 5000, 20000, 50000, 100000, 150000, 200000, 400000, 600000, 1000000];
+      priceCounts = this.getFacetCounts(availablePriceGroups, prices);
+      priceUpperBounds = _.keys(priceCounts);
+      $('#priceSeparator').removeClass('hidden');
+      for (i = 0, _len = priceUpperBounds.length; i < _len; i++) {
+        upperBound = priceUpperBounds[i];
+        if (upperBound === 0 || priceCounts[upperBound] === 0) {
+          continue;
+        }
+        min = priceUpperBounds[i - 1];
+        linkText = "$" + min + " - $" + upperBound + " (" + priceCounts[upperBound] + ")";
         li = $('<li>').appendTo(priceNav);
-        $('<a>').attr({
-          href: "/#/filter/" + min + "/" + price + "/" + search,
-          title: groupName
-        }).text(groupName).appendTo(li);
+        this.buildLink("/#/filter/price/" + min + "/" + upperBound + "/" + search, linkText).appendTo(li);
       }
       li = $('<li>').appendTo(priceNav);
-      return $('<a>').attr({
-        href: "/#/filter/all/all/" + search,
-        title: 'All'
-      }).text('All').appendTo(li);
+      return this.buildLink("/#/filter/all/all/all/" + search, 'All').appendTo(li);
     };
     AppView.prototype.setFormElements = function(locations, type, query) {
       var loc, _i, _len;
@@ -570,11 +619,6 @@
         _results.push(this.locationsReversed[url]);
       }
       return _results;
-    };
-    AppView.prototype.buildUrlForExistingSearch = function(search) {
-      var locations;
-      locations = this.getLocationNamesForUrls(search.locations);
-      return '/#' + this.buildSearchUrl(search.query, locations, search.type);
     };
     AppView.prototype.displaySavedSearches = function() {
       var historyItems, li, locations, ol, savedSearches, search, title, type, url, _results;
@@ -646,20 +690,26 @@
       return _results;
     };
     AppView.prototype.filter = function(options) {
-      var itemPrice, maxPrice, minPrice, view, _i, _len, _ref, _results;
-      if (options.minPrice === 'all') {
-        minPrice = 'all';
-        maxPrice = null;
+      var max, min, val, view, _i, _len, _ref, _results;
+      if (!this.initComplete) {
+        this.bind('initComplete', __bind(function() {
+          return this.filter(options);
+        }, this));
+        return;
+      }
+      if (options.min === 'all') {
+        min = 'all';
+        max = null;
       } else {
-        minPrice = parseInt(options.minPrice);
-        maxPrice = parseInt(options.maxPrice);
+        min = parseFloat(options.min);
+        max = parseFloat(options.max);
       }
       _ref = this.itemViews;
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         view = _ref[_i];
-        itemPrice = view.item.price;
-        _results.push(minPrice === 'all' || itemPrice >= minPrice && itemPrice < maxPrice ? view.show() : view.hide());
+        val = view.item[options.field];
+        _results.push(min === 'all' || val >= min && val < max ? view.show() : view.hide());
       }
       return _results;
     };
@@ -679,7 +729,7 @@
       'search/:locations/:type/:query': 'search',
       'history': 'history',
       'help': 'help',
-      'filter/:min/:max/:locations/:type/:query': 'filter'
+      'filter/:field/:min/:max/:locations/:type/:query': 'filter'
     };
     Router.prototype.initialize = function(options) {
       return this.app = new AppView({
@@ -701,13 +751,14 @@
     Router.prototype.help = function() {
       return this.app.displayHelp();
     };
-    Router.prototype.filter = function(min, max, locations, type, query) {
+    Router.prototype.filter = function(field, min, max, locations, type, query) {
       if (!this.app.lastSearch) {
         this.search(locations, type, query);
       }
       return this.app.filter({
-        minPrice: min,
-        maxPrice: max
+        field: field,
+        min: min,
+        max: max
       });
     };
     return Router;

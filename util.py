@@ -92,7 +92,6 @@ def extract_housing(item):
     # Isolate the price and details (bedrooms, square feet) from a title like:
     # '$1425 / 3br - 1492ft - Beautiful Sherwood Home Could Be Yours, Move in March 1st'
     if '/' in item.contents[1].text:
-        print item.contents[1]
         parts = item.contents[1].text.split('/')
         price = get_price(parts[0])
 
@@ -107,7 +106,15 @@ def extract_housing(item):
             if 'ft' in detail:
                 result['sqft'] = detail
             elif 'br' in detail:
-                result['bedrooms'] = detail
+                # Split the number portion of strings like '1br'
+                bedrooms = detail.lower().split('br')[0]
+
+                try:
+                    bedrooms = int(bedrooms)
+                except ValueError:
+                    bedrooms = 0
+
+                result['bedrooms'] = bedrooms
             else:
                 result['desc'] = detail
     else:

@@ -86,7 +86,7 @@ class CraigslistSearch extends Backbone.Model
       return Date.parse(result.created)
 
   # Save a search in localStorage. Searches are stored with a key that is the
-  # solace search URL and values are a JSON stringified `SearchResult`, e.g.:
+  # solace search URL and values are a JSON stringified `CraigslistSearch`, e.g.:
   #
   #       'http://solace.heroku.com/somesearchstring/etc': json-string-value
   #
@@ -140,7 +140,8 @@ class Craigslist extends Backbone.Model
 
     return "#{@baseUrl}?#{locationQuery}&#{typeQuery}&q=#{encodedQuery}"
 
-  # Search Craigslist for a query in the chosen locations.
+  # Use the back-end web service to search Craigslist for a query in the chosen
+  # locations.
   search: (options) ->
     url = @buildQueryUrl(options.locations, options.type, options.query)
     result = @getSearchFromCache(url)
@@ -413,12 +414,25 @@ class AppView extends Backbone.View
     else
       alert('Oops, we could not complete the search! Try again later.')
 
-  # Build a search URL given criteria a query string, an array of locations and
-  # a string representing the Craigslist search type, e.g., 'jjj'
-  buildSearchUrl: (query, locations, type) ->
-    encodedQuery = encodeURIComponent(query)
+  # Build a front-end search URL used for navigation and caching purposes from
+  # an existing CraigslistSearch object `search`.
+  buildUrlForExistingSearch: (search) ->
+    locations = @getLocationNamesForUrls(search.locations)
+    return '/#'+@buildSearchUrl(locations, search.type, search.query)
+
+  # Return everything needed for a front-end search URL given a `locations` (an
+  # array of human-readable location names), `type` (a string like 'jjj') and
+  # `query` (the user's search), except the '/#/search/' portion.
+  buildSearchUrlFragment: (locations, type, query) ->
+    encodedType = encodeURIComponent(type)
     encodedLocations = encodeURIComponent(locations.join('&'))
-    return "/search/#{encodedLocations}/#{type}/#{encodedQuery}"
+    encodedQuery = encodeURIComponent(query)
+    return "#{encodedLocations}/#{encodedType}/#{encodedQuery}"
+
+  # Build a front-end search URL.
+  buildSearchUrl: (locations, type, query) ->
+    searchFragment = @buildSearchUrlFragment(locations, type, query)
+    return "/search/#{searchFragment}"
 
   # Handle a user-initiated search via the search form.
   #
@@ -438,7 +452,7 @@ class AppView extends Backbone.View
       @hideSearchDropdown()
       # Autocomplete menu items sometimes hang out, so hide the menu.
       $('ul.ui-autocomplete').hide()
-      searchUrl = @buildSearchUrl(query, locations, type)
+      searchUrl = @buildSearchUrl(locations, type, query)
       @router.navigate(searchUrl)
    
   # Remove a location from the location div.
@@ -453,6 +467,7 @@ class AppView extends Backbone.View
   displaySearchResults: =>
     @showSearchIcon()
     prices = []
+    rooms = []
 
     if not @lastSearch.result.items
       @retryLastSearch()
@@ -496,6 +511,8 @@ class AppView extends Backbone.View
       for item in items
         if item.price
           prices.push(item.price)
+        if item.bedrooms
+          rooms.push(item.bedrooms)
 
         @itemViews.push(new ItemView(
           item: item
@@ -505,57 +522,103 @@ class AppView extends Backbone.View
       if @itemViews.length == 0
         $("<p>").text("No results for this location.").appendTo(resultType)
 
+    # Display search facets if appropriate.
     if prices.length > 0
-      @displayPriceGroups(prices)
+      @displayPriceFacet(prices)
+    if rooms.length > 0
+      @displayRoomCountFacet(rooms)
 
-  # Display price groups given an array of numbers, `prices`.
-  displayPriceGroups: (prices) ->
+  # Return a count of the number of `values` in each number of `groups`,
+  # assuming both arguments are arrays of numbers.
+  getFacetCounts: (availableGroups, values) ->
+    groups = [0]
+    min = _.min(values)
+    max = _.max(values)
+
+    # Make  the minimum value the head of the array and the max the tail.
+    availableGroups.unshift(min)
+    availableGroups.push(max)
+
+    for group in availableGroups
+      if group > min then groups.push(group) else continue
+
+    counts = {}
+    counts[group] = 0 for group in groups
+
+    for val, i in values
+      for groupUpperBound in groups
+        if val < groupUpperBound
+          counts[groupUpperBound] += 1
+          break
+
+    return counts
+
+  # A helper method to create a <a> element.
+  buildLink: (href, text) ->
+    return $('<a>').attr({
+      href: href,
+      title: text,
+    }).text(text)
+
+  # Allow the user to filter search results based on the number of rooms each
+  # item has (for, e.g., a housing search).
+  displayRoomCountFacet: (rooms) ->
+    roomNav = $('ul#roomNav')
+    locationNames = @getLocationNamesForUrls(@lastSearch.locations)
+    search = @buildSearchUrlFragment(
+      locationNames, @lastSearch.type, @lastSearch.query)
+    roomCounts = @getFacetCounts([1, 2, 3, 4, 5], rooms)
+    roomUpperBounds = _.keys(roomCounts)
+
+    console.log rooms, roomCounts, roomUpperBounds
+
+    # Show the room separator
+    $('#roomSeparator').removeClass('hidden')
+
+    for upperBound, i in roomUpperBounds
+      if upperBound == 0 or roomCounts[upperBound] == 0
+        continue
+
+      min = roomUpperBounds[i-1]
+      linkText = "#{min}br - #{upperBound}br (#{roomCounts[upperBound]})"
+      li = $('<li>').appendTo(roomNav)
+      @buildLink("/#/filter/bedrooms/#{min}/#{upperBound}/#{search}", linkText)
+        .appendTo(li)
+
+    li = $('<li>').appendTo(roomNav)
+    @buildLink("/#/filter/all/all/#{search}", 'All').appendTo(li)
+
+  # Display price facets given an array of numbers, `prices`.
+  displayPriceFacet: (prices) ->
     priceNav = $('ul#priceNav')
     minPrice = _.min(prices)
-    locations = @getLocationNamesForUrls(@lastSearch.locations)
-    locationQuery = encodeURIComponent(locations.join('&'))
-    search = "#{locationQuery}/#{@lastSearch.type}/#{@lastSearch.query}"
+    locationNames = @getLocationNamesForUrls(@lastSearch.locations)
+    search = @buildSearchUrlFragment(
+      locationNames, @lastSearch.type, @lastSearch.query)
+
+    availablePriceGroups = [50, 250, 500, 1000, 2000, 5000, 20000,
+                            50000, 100000, 150000, 200000, 400000, 600000,
+                            1000000]
+
+    priceCounts = @getFacetCounts(availablePriceGroups, prices)
+    priceUpperBounds = _.keys(priceCounts)
 
     # Show the price separator
     $('#priceSeparator').removeClass('hidden')
 
-    priceGroups = []
-    availableGroups = [0, minPrice, 50, 250, 500, 1000, 2000, 5000, 20000,
-                       50000, 100000, 150000, 200000, 400000, 600000, 1000000,
-                       _.max(prices)]
-
-    for group in availableGroups
-      if group > minPrice then priceGroups.push(group) else continue
-
-    priceCounts = {}
-    priceCounts[group] = 0 for group in priceGroups
-
-    for price, i in prices
-      for groupMax in priceGroups
-        if price < groupMax
-          priceCounts[groupMax] += 1
-          break
-
-    for price, i in priceGroups
-      if i == 0 or priceCounts[price] == 0
+    for upperBound, i in priceUpperBounds
+      if upperBound == 0 or priceCounts[upperBound] == 0
         continue
 
-      min = priceGroups[i-1]
-      groupName = "$#{min} - $#{price} (#{priceCounts[price]})"
+      min = priceUpperBounds[i-1]
+      linkText = "$#{min} - $#{upperBound} (#{priceCounts[upperBound]})"
       li = $('<li>').appendTo(priceNav)
-
-      $('<a>').attr({
-        href: "/#/filter/#{min}/#{price}/#{search}",
-        title: groupName,
-      }).text(groupName).appendTo(li)
+      @buildLink("/#/filter/price/#{min}/#{upperBound}/#{search}", linkText)
+        .appendTo(li)
 
     li = $('<li>').appendTo(priceNav)
-
-    $('<a>').attr({
-      href: "/#/filter/all/all/#{search}",
-      title: 'All',
-    }).text('All').appendTo(li)
-
+    # TODO: Can I have a separate route for this?
+    @buildLink("/#/filter/all/all/all/#{search}", 'All').appendTo(li)
 
   # Set the search box form elements to the given parameters.
   #
@@ -589,12 +652,6 @@ class AppView extends Backbone.View
   # Transform the URL of the location into a human-readable location name.
   getLocationNamesForUrls: (locationUrls) ->
     return (@locationsReversed[url] for url in locationUrls)
-
-  # Build a search URL used internally by the front-end app for navigation and
-  # caching purposes from an existing SearchResult object `search`.
-  buildUrlForExistingSearch: (search) ->
-    locations = @getLocationNamesForUrls(search.locations)
-    return '/#'+@buildSearchUrl(search.query, locations, search.type)
 
   # Show a list of the user's past searches and let them reopen a search.
   displaySavedSearches: ->
@@ -667,17 +724,21 @@ class AppView extends Backbone.View
   # Filter search results by values in `options`.
   # Only supports 'minPrice' and 'maxPrice' at present.
   filter: (options) ->
-    if options.minPrice == 'all'
-      minPrice = 'all'
-      maxPrice = null
+    if not @initComplete
+      @bind('initComplete', () => @filter(options))
+      return
+
+    if options.min == 'all'
+      min = 'all'
+      max = null
     else
-      minPrice = parseInt(options.minPrice)
-      maxPrice = parseInt(options.maxPrice)
+      min = parseFloat(options.min)
+      max = parseFloat(options.max)
 
     for view in @itemViews
-      itemPrice = view.item.price
+      val = view.item[options.field]
 
-      if minPrice == 'all' or itemPrice >= minPrice and itemPrice < maxPrice 
+      if min == 'all' or val >= min and val < max 
         view.show()
       else
         view.hide()
@@ -692,7 +753,7 @@ class Router extends Backbone.Router
     'search/:locations/:type/:query': 'search'
     'history': 'history'
     'help': 'help'
-    'filter/:min/:max/:locations/:type/:query': 'filter'
+    'filter/:field/:min/:max/:locations/:type/:query': 'filter'
 
   initialize: (options) ->
     @app = new AppView
@@ -719,15 +780,21 @@ class Router extends Backbone.Router
   help: =>
     @app.displayHelp()
 
-  # Filter search results by `price`.
-  filter: (min, max, locations, type, query) ->
+  # Filter search results by `min` (number) and `max` (number) of `field`
+  # (string - a property name of the result's CraigslistSearch).
+  #
+  # A search fragment is tacked onto the URL in `locations`, `type` and `query`
+  # in order to make filtered URLs bookmarkable; IE, in that case the search
+  # must be performed again, before the filter is applied.
+  filter: (field, min, max, locations, type, query) ->
     # Search using the given parameters if a search isn't in progress.
     if not @app.lastSearch
       @search(locations, type, query)
 
     @app.filter(
-      minPrice: min
-      maxPrice: max
+      field: field
+      min: min
+      max: max
     )
 
 
