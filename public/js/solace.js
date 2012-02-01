@@ -535,6 +535,14 @@
       }
       return counts;
     };
+    AppView.prototype.addResetFilterNavItem = function(search) {
+      var li, resetNav;
+      $('#resetSeparator').removeClass('hidden');
+      resetNav = $('ul#resetNav');
+      resetNav.children('li').empty();
+      li = $('<li>').appendTo(resetNav);
+      return this.buildLink("/#/filter/all/all/all/" + search, 'All').appendTo(li);
+    };
     AppView.prototype.buildLink = function(href, text) {
       return $('<a>').attr({
         href: href,
@@ -548,7 +556,6 @@
       search = this.buildSearchUrlFragment(locationNames, this.lastSearch.type, this.lastSearch.query);
       roomCounts = this.getFacetCounts([1, 2, 3, 4, 5], rooms);
       roomUpperBounds = _.keys(roomCounts);
-      console.log(rooms, roomCounts, roomUpperBounds);
       $('#roomSeparator').removeClass('hidden');
       for (i = 0, _len = roomUpperBounds.length; i < _len; i++) {
         upperBound = roomUpperBounds[i];
@@ -560,8 +567,7 @@
         li = $('<li>').appendTo(roomNav);
         this.buildLink("/#/filter/bedrooms/" + min + "/" + upperBound + "/" + search, linkText).appendTo(li);
       }
-      li = $('<li>').appendTo(roomNav);
-      return this.buildLink("/#/filter/all/all/" + search, 'All').appendTo(li);
+      return this.addResetFilterNavItem(search);
     };
     AppView.prototype.displayPriceFacet = function(prices) {
       var availablePriceGroups, i, li, linkText, locationNames, min, minPrice, priceCounts, priceNav, priceUpperBounds, search, upperBound, _len;
@@ -583,8 +589,7 @@
         li = $('<li>').appendTo(priceNav);
         this.buildLink("/#/filter/price/" + min + "/" + upperBound + "/" + search, linkText).appendTo(li);
       }
-      li = $('<li>').appendTo(priceNav);
-      return this.buildLink("/#/filter/all/all/all/" + search, 'All').appendTo(li);
+      return this.addResetFilterNavItem(search);
     };
     AppView.prototype.setFormElements = function(locations, type, query) {
       var loc, _i, _len;
@@ -600,6 +605,7 @@
     AppView.prototype.clearSidebar = function() {
       $('ul#locationNav li').remove();
       $('ul#priceNav li').remove();
+      $('ul#resetNav li').remove();
       return $('#sidebar div.separator').addClass('hidden');
     };
     AppView.prototype.clearSavedSearches = function() {

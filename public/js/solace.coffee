@@ -474,8 +474,7 @@ class AppView extends Backbone.View
     else
       @retryCount = 0
 
-    # TODO: Refactor other sections so we can call @clearItems() in
-    # @displaySearch()
+    # TODO: Refactor other sections so we can call @clearItems() elsewhere.
     @clearItems()
     @displaySection(@lastSearch.type)
   
@@ -553,6 +552,15 @@ class AppView extends Backbone.View
 
     return counts
 
+  # Add an 'All' link to the sidebar that will reset current filters.
+  # TODO: Can I have a separate route for this?
+  addResetFilterNavItem: (search) ->
+    $('#resetSeparator').removeClass('hidden')
+    resetNav = $('ul#resetNav')
+    resetNav.children('li').empty()
+    li = $('<li>').appendTo(resetNav)
+    @buildLink("/#/filter/all/all/all/#{search}", 'All').appendTo(li)
+
   # A helper method to create a <a> element.
   buildLink: (href, text) ->
     return $('<a>').attr({
@@ -570,8 +578,6 @@ class AppView extends Backbone.View
     roomCounts = @getFacetCounts([1, 2, 3, 4, 5], rooms)
     roomUpperBounds = _.keys(roomCounts)
 
-    console.log rooms, roomCounts, roomUpperBounds
-
     # Show the room separator
     $('#roomSeparator').removeClass('hidden')
 
@@ -585,8 +591,7 @@ class AppView extends Backbone.View
       @buildLink("/#/filter/bedrooms/#{min}/#{upperBound}/#{search}", linkText)
         .appendTo(li)
 
-    li = $('<li>').appendTo(roomNav)
-    @buildLink("/#/filter/all/all/#{search}", 'All').appendTo(li)
+    @addResetFilterNavItem(search)
 
   # Display price facets given an array of numbers, `prices`.
   displayPriceFacet: (prices) ->
@@ -616,9 +621,7 @@ class AppView extends Backbone.View
       @buildLink("/#/filter/price/#{min}/#{upperBound}/#{search}", linkText)
         .appendTo(li)
 
-    li = $('<li>').appendTo(priceNav)
-    # TODO: Can I have a separate route for this?
-    @buildLink("/#/filter/all/all/all/#{search}", 'All').appendTo(li)
+    @addResetFilterNavItem(search)
 
   # Set the search box form elements to the given parameters.
   #
@@ -638,6 +641,7 @@ class AppView extends Backbone.View
   clearSidebar: ->
     $('ul#locationNav li').remove()
     $('ul#priceNav li').remove()
+    $('ul#resetNav li').remove()
     # Hide any separator lines
     $('#sidebar div.separator').addClass('hidden')
 
