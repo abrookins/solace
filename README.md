@@ -1,12 +1,15 @@
-# Find Solace
+# Solace
 
 This is a web app that lets the user search multiple Craigslist locations
-simultaneously. 
+simultaneously.
 
-I wrote it to experiment with CoffeeScript. The first version used Sinatra as
-the back-end and queried YQL for Craigslist data in the front-end. However, the
-YQL search was too limited, so I wrote this version, which uses Python (Flask)
-for the back-end and scrapes Craigslist directly for search results.
+The front-end is written in CoffeeScript and is located in
+`public/js/solace.coffee`. It offers some in-app features like caching via
+localStorage and filtering (price, location and # of bedrooms depending on the
+search type).
 
-I assume Craigslist will block the app eventually, but in the meantime you can
-run it at http://solace.heroku.com.
+The back-end is written in Python, using Flask, in `solace.py`. It proxies
+searches from the front-end to Craigslist, then scrapes the result and returns
+JSONP data.
+
+You can run the app at http://solace.herokuapp.com.
