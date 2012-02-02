@@ -1,7 +1,15 @@
+"""
+solace: A Flask app that proxies multiple-location searches to Craigslist and
+returns the results via JSONP.
+
+Copyright (c) 2012 Andrew Brookins. All Rights Reserved.
+"""
+
+
 import flask
 import os
 import decorators
-import util
+import craigslist
 
 
 app = flask.Flask(__name__)
@@ -39,6 +47,7 @@ def search():
     Returns an object with the following structure:
 
        {
+        'result':
          'location': [item1, item2, ...]
        }
 
@@ -46,6 +55,7 @@ def search():
     each location, e.g.:
 
        {
+        'result':
          'location1': [item1, item2, ...],
          'location2': [item1, item2, ...]
        }
@@ -56,7 +66,7 @@ def search():
     listings = {}
 
     for location in locations:
-        listings[location] = util.search_craigslist(location, category, query)
+        listings[location] = craigslist.search(location, category, query)
 
     return flask.jsonify(result=listings)
 

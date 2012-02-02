@@ -369,8 +369,8 @@ class AppView extends Backbone.View
     locations = _.uniq(
       $(l).text() for l in @locationsDiv.children('span'))
     
-    # Create an array of strings in the form 'location={url}' suitable for
-    # joining and stuffing into a search URL.
+    # Create an array of strings in the form 'location={location name}'
+    # suitable for joining and stuffing into a search URL.
     # Each location in `locations` will have an 'x' that we need to slice off.
     return ("location=#{loc.slice(0, loc.length-1)}" for loc in locations)
 

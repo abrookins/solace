@@ -1,16 +1,29 @@
-# Solace utilities.
+"""
+craigslist: A module for searching Craigslist.
+
+Copyright (c) 2012 Andrew Brookins. All Rights Reserved.
+"""
+
 import re
 import requests
 from BeautifulSoup import BeautifulSoup
 
 
+# a dictionary of extractor functions, each mapped to a Craigslist search
+# category key like 'jjj' or 'hhh'
 _extractor_registry = {}
 
 
 def register_extractor(*args):
     """
-    Register `fn` as an extractor for string arguments.
+    Register `fn` as an extractor for any Craigslist category passed in *args
     Arguments should be Craiglist search categories like 'sss' or 'jjj'.
+
+    e.g., 
+
+        @register_extracotr('jjj', 'hhh')
+        def my_extractor(text):
+            ...
     """
     def decorator(fn):
         for category in args:
@@ -22,27 +35,24 @@ def register_extractor(*args):
 
 
 def get_extractor(category):
-    """ Get the extractor function for `category` (string). """
+    """ 
+    Get the extractor function for `category`.
+    If no function is registered for `category`, return the default extractor.    
+    """
     fn = _extractor_registry.get(category, None)
 
     if fn == None:
-        fn = _extractor_registry.get('default')
+        fn = _extractor_registry.get('default', None)
 
     return fn
 
 
-def get_price(string):
+def get_price(text):
     """
-    Try to extract a price from `string`.
+    Try to extract a price from `text`.
     """
-    money = re.compile('|'.join([
-      r'^\$?(\d*\.\d{1,2})$',
-      r'^\$?(\d+)$',
-      r'^\$(\d+\.?)$',
-    ]))
-
-    price_str = string.strip()
-    matches = money.match(price_str)
+    money = re.compile('^\$(\d{1,3}(\,\d{3})*|(\d+))(\.\d{2})?$')
+    matches = money.match(text.strip())
     price = matches and matches.group(0) or None
     
     if price:
@@ -86,7 +96,7 @@ def extract_job(item):
 
 @register_extractor('hhh')
 def extract_housing(item):
-    """ Extract a Craigslist house for sale or rental. """
+    """ Extract a Craigslist housing unit for sale or rental. """
     result = {}
 
     # Isolate the price and details (bedrooms, square feet) from a title like:
@@ -149,18 +159,35 @@ def extract_results(raw_results, category):
     return results
 
 
-def search_craigslist(location, category, query):
+# Craigslist search types. These values indicate whether to seach all text in
+# posts or just titles. The query arg for this value is 'srchType'.
+SEARCH_ALL = 'A'
+SEARCH_TITLES = 'T'
+
+
+def search(location, category, query, search_type=SEARCH_ALL):
     """
-    Search each Craigslist location `location` (iterable) for `query` in
-    `category`.
+    Search each Craigslist location `location` (iterable) for passing
+    `category` to Craigslist as the search category and `query` as the user's
+    search. 
+
+    `search_type` indicates whether this is an all-text search ('A') or just a
+    title search ('T').
     """
     results = []
+    valid_search_types = [SEARCH_ALL, SEARCH_TITLES]
 
+    if not search_type in valid_search_types:
+        raise ValueError(
+            'Search type must be one of: %s.' % ', '.join(valid_search_types))
+
+    # 'srchType=A': Default to an "all-text" search rather than just titles.
     search_url = '%ssearch/%s?query=%s&srchType=A' % (
         location, category, query)
 
     content = BeautifulSoup(
-        requests.get(search_url).text, convertEntities=BeautifulSoup.HTML_ENTITIES)
+        requests.get(search_url).text,
+        convertEntities=BeautifulSoup.HTML_ENTITIES)
 
     for raw_results in content.findAll('h4'):
         results = results + extract_results(raw_results, category)
