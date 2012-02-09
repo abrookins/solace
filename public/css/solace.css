@@ -192,7 +192,7 @@ div#content {
     line-height: 1.5em;
     float: left;
     margin: 0em 1em 1em 1em;
-    overflow: scroll;
+    overflow: hidden;
     max-width: 900px;
     word-wrap: break-word;
 }

@@ -8,7 +8,7 @@ from base_test import SolaceTestCase
 
 
 class TestSolace(SolaceTestCase):
-    """ Tests for the solace odule. """
+    """ Tests for the solace module. """
 
     def setUp(self):
         solace.app.config['TESTING'] = True
