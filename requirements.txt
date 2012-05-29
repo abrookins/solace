@@ -1,3 +1,3 @@
 Flask==0.8
 mock==0.7.2
-git+git://github.com/abrookins/craigslist.git#egg=craigslist
+git+git://github.com/abrookins/craigslist.git#egg=craigslist==0.01
