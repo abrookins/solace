@@ -32,11 +32,10 @@ def index():
     as a JavaScript object on the page. This cuts down on AJAX calls back to the
     server for the initial page load.
     """
-    locations_file = open('fixtures/locations.json')
-
-    return flask.render_template(
-        'index.html',
-        location_json=locations_file.read())
+    with open('fixtures/locations.json') as locations_file:
+        return flask.render_template(
+            'index.html',
+            location_json=locations_file.read())
 
 
 @decorators.jsonp
