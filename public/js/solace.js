@@ -628,7 +628,7 @@
       return _results;
     };
     AppView.prototype.displaySavedSearches = function() {
-      var historyItems, li, locations, ol, savedSearches, search, title, type, url, _results;
+      var historyItems, id, li, locations, ol, savedSearches, search, title, type, url, _results;
       if (!this.initComplete) {
         this.bind('initComplete', __bind(function() {
           return this.displaySavedSearches();
@@ -643,11 +643,12 @@
         for (url in savedSearches) {
           search = savedSearches[url];
           type = $('#' + search.type).children('h2').text();
-          ol = $('ol#' + search.type);
+          id = "history-" + search.type;
+          ol = $('ol#' + id);
           if (ol.length === 0) {
             $('<h3>').appendTo(historyItems).text(type);
             ol = $('<ol>').appendTo(historyItems).attr({
-              id: search.type
+              id: id
             });
           }
           li = $('<li>').appendTo(ol);

@@ -672,11 +672,12 @@ class AppView extends Backbone.View
       # Display a separate list for each search type.
       for url, search of savedSearches
         type = $('#'+search.type).children('h2').text()
-        ol = $('ol#' + search.type)
+        id = "history-#{search.type}"
+        ol = $('ol#' + id)
 
         if ol.length == 0
           $('<h3>').appendTo(historyItems).text(type)
-          ol = $('<ol>').appendTo(historyItems).attr({id: search.type})
+          ol = $('<ol>').appendTo(historyItems).attr({id: id})
 
         li = $('<li>').appendTo(ol)
         locations = @getLocationNamesForUrls(search.locations)
