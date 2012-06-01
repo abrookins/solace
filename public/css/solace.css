@@ -31,8 +31,9 @@ ul li {
 }
 
 div#header {
-    overflow: auto;
+    overflow: visible;
     width: 100%;
+    position: relative;
 }
 
 div#logo h1,
@@ -115,18 +116,18 @@ div#locations span {
     float: left;
     margin:0 3px 3px 0;
     padding:3px 20px 4px 8px;
-	position:relative;
+    position:relative;
     background-color:#fff;
-	border:1px solid #E0D1CC;
+    border:1px solid #E0D1CC;
     -moz-border-radius:7px;
-	-webkit-border-radius:7px;
+    -webkit-border-radius:7px;
     border-radius:7px;
-	font:normal 11px Verdana, Sans-serif;
+    font:normal 11px Verdana, Sans-serif;
 }
 
 ul.searchbox-dropdown a.remove {
     color:#666;
-	font:bold .8em Verdana, Sans-serif;
+    font:bold .8em Verdana, Sans-serif;
     text-decoration:none;
 }
 
@@ -136,7 +137,7 @@ div#locations span a {
     right:8px;
     top:2px;
     color:#666;
-	font:bold 12px Verdana, Sans-serif;
+    font:bold 12px Verdana, Sans-serif;
     text-decoration:none;
 }
 
@@ -160,6 +161,7 @@ div#results {
     padding-top: 3em;
     background: white;
     padding-bottom: 20px;
+    position: relative;
 }
 
 div#sidebar {
@@ -216,49 +218,52 @@ div#footer {
 }
 
 .searchbox-wrapper{
-	margin:0;
-	padding:0;
+    margin:0;
+    padding:0;
 }
 
 .searchbox-wrapper input[type="text"],
 ul.searchbox-dropdown {
-	border:1px solid #fff;
-	background: #fafafa; 
-	background: -webkit-gradient(linear, left top, left bottom, from(#f2f2f2), to(#fafafa)); 
-	background: -moz-linear-gradient(top, #f2f2f2, #fafafa);
-	font-size:1.1em;
-	-moz-box-shadow:1px 1px 3px #555;
-	-webkit-box-shadow:1px 1px 3px #555;
-	-box-shadow:1px 1px 3px #555;
-	outline:none;
-	padding:6px 5px 6px 20px;
-	text-shadow:1px 1px 1px #fff;
-	width:295px;
-	margin:3px 0px;
+    border:1px solid #fff;
+    background: #fafafa; 
+    background: -webkit-gradient(linear, left top, left bottom, from(#f2f2f2), to(#fafafa)); 
+    background: -moz-linear-gradient(top, #f2f2f2, #fafafa);
+    font-size:1.1em;
+    -moz-box-shadow:1px 1px 3px #555;
+    -webkit-box-shadow:1px 1px 3px #555;
+    -box-shadow:1px 1px 3px #555;
+    outline:none;
+    padding:6px 5px 6px 20px;
+    text-shadow:1px 1px 1px #fff;
+    width:295px;
+    margin:3px 0px;
 }
 
 ul.searchbox-dropdown {
-	list-style:none;
-	width:390px;
+    list-style:none;
+    width:390px;
     min-height: 125px;
-	padding:6px 5px;
-	-moz-border-radius:0px 0px 10px 10px;
-	-webkit-border-bottom-right-radius:10px;
-	-webkit-border-bottom-left-radius:10px;
-	border-bottom-right-radius:10px;
-	border-bottom-left-radius:10px;
+    padding:6px 5px;
+    -moz-border-radius:0px 0px 10px 10px;
+    -webkit-border-bottom-right-radius:10px;
+    -webkit-border-bottom-left-radius:10px;
+    border-bottom-right-radius:10px;
+    border-bottom-left-radius:10px;
     overflow: auto;
     float: left;
+    position: absolute;
+    top: 49px;
+    z-index: 10;
 }
 
 ul.searchbox-dropdown li {
-	font-size:16px;
-	line-height:32px;
-	height:32px;
+    font-size:16px;
+    line-height:32px;
+    height:32px;
 }
 
 ul.searchbox-dropdown li input[type="checkbox"] {
-	margin:10px 4px 0 5px;
+    margin:10px 4px 0 5px;
     float: left;
 }
 
@@ -272,33 +277,33 @@ ul.searchbox-dropdown li.locations {
 }
 
 ul.searchbox-dropdown li.searchbox-filter{
-	font-size:12px;
-	text-transform:uppercase;
-	letter-spacing:1px;
-	color:#444;
-	height:16px;
-	line-height:16px;
-	padding:5px;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:#444;
+    height:16px;
+    line-height:16px;
+    padding:5px;
 }
 
 input.searchbox-search {
-	background:#f2f2f2 url(../icons/search.png) no-repeat center center;
-	height:32px;
-	width:50px;
-	float:left;
-	border:none;
-	margin:3px 0px;
-	border:1px solid #fff;
-	-moz-box-shadow:1px 1px 3px #555;
-	-webkit-box-shadow:1px 1px 3px #555;
-	-box-shadow:1px 1px 3px #555;
-	outline:none;
-	cursor:pointer;
+    background:#f2f2f2 url(../icons/search.png) no-repeat center center;
+    height:32px;
+    width:50px;
+    float:left;
+    border:none;
+    margin:3px 0px;
+    border:1px solid #fff;
+    -moz-box-shadow:1px 1px 3px #555;
+    -webkit-box-shadow:1px 1px 3px #555;
+    -box-shadow:1px 1px 3px #555;
+    outline:none;
+    cursor:pointer;
 }
 
 input.searchbox-search:hover {
     float:left;
-	background-color:#fff;
+    background-color:#fff;
 }
 
 /* Scrollable autocomplete results. */
