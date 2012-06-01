@@ -645,14 +645,13 @@
           type = $('#' + search.type).children('h2').text();
           ol = $('ol#' + search.type);
           if (ol.length === 0) {
-            $('<h3>').appendTo(historyItems).text(type.charAt(0).toUpperCase() + type.substr(1));
+            $('<h3>').appendTo(historyItems).text(type);
             ol = $('<ol>').appendTo(historyItems).attr({
               id: search.type
             });
           }
           li = $('<li>').appendTo(ol);
           locations = this.getLocationNamesForUrls(search.locations);
-          type = $('#' + search.type).children('h2').text();
           title = "" + type + " matching '" + search.query + "' in: " + (locations.join('; '));
           url = this.buildUrlForExistingSearch(search);
           _results.push($("<a>").attr({
