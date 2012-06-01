@@ -34,6 +34,7 @@ div#header {
     overflow: visible;
     width: 100%;
     position: relative;
+    float: left;
 }
 
 div#logo h1,
@@ -162,6 +163,7 @@ div#results {
     background: white;
     padding-bottom: 20px;
     position: relative;
+    float: left;
 }
 
 div#sidebar {
