@@ -639,10 +639,17 @@
       historyItems = $('#history').children('.items');
       this.displaySection('history');
       if (savedSearches) {
-        ol = $('<ol>').appendTo(historyItems);
         _results = [];
         for (url in savedSearches) {
           search = savedSearches[url];
+          type = $('#' + search.type).children('h2').text();
+          ol = $('ol#' + search.type);
+          if (ol.length === 0) {
+            $('<h3>').appendTo(historyItems).text(type.charAt(0).toUpperCase() + type.substr(1));
+            ol = $('<ol>').appendTo(historyItems).attr({
+              id: search.type
+            });
+          }
           li = $('<li>').appendTo(ol);
           locations = this.getLocationNamesForUrls(search.locations);
           type = $('#' + search.type).children('h2').text();
