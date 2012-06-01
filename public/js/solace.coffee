@@ -263,6 +263,10 @@ class AppView extends Backbone.View
     # Keyboard shortcuts
     $(document).keydown(@handleKeydown)
 
+    # Hide the search box if the user clicks outside of it.
+    $('html').live('click', @hideSearchDropdown)
+    $('div#search').live('click', (e) -> e.stopPropagation())
+
     @startAutocomplete()
 
   # Was a Command or Control key combo pressed, e.g., Command+/
@@ -277,6 +281,7 @@ class AppView extends Backbone.View
   # Handle keyboard presses - for keyboard shortcuts.
   handleKeydown: (e) =>
     hasValidModifier = @hasValidModifierKey(e)
+
     if hasValidModifier
       @validModifierKeyPressed or= hasValidModifier
     else
@@ -284,6 +289,7 @@ class AppView extends Backbone.View
 
   receiveKey: (keyEvent) =>
     switch keyEvent.which
+      # Forward-slash (/) key.
       when 191
         if @validModifierKeyPressed
           if $('ul.searchbox-dropdown').is(':visible')
@@ -291,6 +297,9 @@ class AppView extends Backbone.View
           else
             $('#query').focus()
           @validModifierKeyPressed = false
+      # Escape key.
+      when 27
+        @hideSearchDropdown()
 
   # Show the search dropdown menu with location and type options.
   showSearchDropdown: =>
@@ -453,7 +462,7 @@ class AppView extends Backbone.View
       $('ul.ui-autocomplete').hide()
       searchUrl = @buildSearchUrl(locations, type, query)
       @router.navigate(searchUrl)
-   
+
   # Remove a location from the location div.
   removeLocation: () ->
     $(@).parent().remove()
@@ -464,6 +473,7 @@ class AppView extends Backbone.View
   # When a Craigslist instance has results, display them on the page,
   # separated by headers for each location the user searched.
   displaySearchResults: =>
+    @hideSearchDropdown()
     @showSearchIcon()
     prices = []
     rooms = []
@@ -476,7 +486,7 @@ class AppView extends Backbone.View
     # TODO: Refactor other sections so we can call @clearItems() elsewhere.
     @clearItems()
     @displaySection(@lastSearch.type)
-  
+
     resultType = $('#'+@lastSearch.type).children('.items')
     locationNav = $('ul#locationNav')
 

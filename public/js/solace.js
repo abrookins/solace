@@ -263,6 +263,10 @@
       this.searchForm.find('.searchbox-input').live('focus click', this.showSearchDropdown);
       $('#close-search').live('click', this.hideSearchDropdown);
       $(document).keydown(this.handleKeydown);
+      $('html').live('click', this.hideSearchDropdown);
+      $('div#search').live('click', function(e) {
+        return e.stopPropagation();
+      });
       return this.startAutocomplete();
     };
     AppView.prototype.hasValidModifierKey = function(keyEvent) {
@@ -295,6 +299,9 @@
             }
             return this.validModifierKeyPressed = false;
           }
+          break;
+        case 27:
+          return this.hideSearchDropdown();
       }
     };
     AppView.prototype.showSearchDropdown = function() {
@@ -449,6 +456,7 @@
     };
     AppView.prototype.displaySearchResults = function() {
       var item, items, li, location, locationHeader, locationName, locationNav, prices, resultType, rooms, ul, _i, _len, _ref;
+      this.hideSearchDropdown();
       this.showSearchIcon();
       prices = [];
       rooms = [];
