@@ -1,3 +1,6 @@
 Flask==0.8
 mock==0.7.2
 git+git://github.com/abrookins/craigslist.git#egg=craigslist==0.04
+Flask-Cache==0.4.0
+redis==2.4.13
+python-cjson==1.0.5

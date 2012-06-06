@@ -253,6 +253,7 @@
         this.locationsReversed[url] = city;
       }
       this.craigslist = new Craigslist;
+      this.userLocation = options.userLocation;
       this.itemViews = [];
       $('#submit').live('click', this.handleSearchClick);
       $('#clear-history').live('click', this.clearSavedSearches);
@@ -690,7 +691,7 @@
       return this.displaySection('welcome');
     };
     AppView.prototype.displaySection = function(sectionId) {
-      var listingDiv, sectionDiv, sectionItems;
+      var listingDiv, sectionDiv, sectionItems, userLoc;
       listingDiv = $('#result-listing');
       listingDiv.removeClass('hidden');
       sectionDiv = $('#' + sectionId);
@@ -699,7 +700,11 @@
       this.clearSidebar();
       $('#result-listing div').addClass('hidden');
       sectionDiv.removeClass('hidden');
-      return sectionItems.removeClass('hidden');
+      sectionItems.removeClass('hidden');
+      if (this.userLocation['city'] != null) {
+        userLoc = this.userLocation['city'] + ", " + this.userLocation['RegionName'];
+        return this.setFormElements([userLoc], 'sss', '');
+      }
     };
     AppView.prototype.parseSearchLocations = function(locationString) {
       var l, _i, _len, _ref, _results;
@@ -756,7 +761,8 @@
     Router.prototype.initialize = function(options) {
       return this.app = new AppView({
         router: this,
-        locations: options.locations
+        locations: options.locations,
+        userLocation: options.userLocation
       });
     };
     Router.prototype.index = function() {

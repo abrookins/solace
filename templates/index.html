@@ -127,7 +127,7 @@
               <div class=items></div>
             </div>
 
-            <div id=bbb class=hidden>
+            <div id=bbb} class=hidden>
               <h2>Services</h2>
               <div class=items></div>
             </div>
@@ -143,7 +143,8 @@
   <script type="text/javascript">
     $(document).ready(function() {
         new solace.Router({
-          locations: {{ location_json|safe }}
+            locations: {{ craigslist_locations|safe }},
+            userLocation: {{ user_location|safe }}
         });
         Backbone.history.start();
     });

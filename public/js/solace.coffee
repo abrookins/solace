@@ -239,6 +239,7 @@ class AppView extends Backbone.View
     @locationsReversed = {}
     @locationsReversed[url] = city for city, url of @locations['cities']
     @craigslist = new Craigslist
+    @userLocation = options.userLocation
 
     # TODO: This should be a Collection.
     @itemViews = []
@@ -735,6 +736,10 @@ class AppView extends Backbone.View
     sectionDiv.removeClass('hidden')
     sectionItems.removeClass('hidden')
 
+    if @userLocation['city']?
+      userLoc = @userLocation['city'] + ", " + @userLocation['RegionName']
+      @setFormElements([userLoc], 'sss', '')
+
   # Parse the locations from a URL-encoded array of locations, as passed by the
   # locations form when constructing search URLs.
   parseSearchLocations: (locationString) ->
@@ -778,6 +783,7 @@ class Router extends Backbone.Router
     @app = new AppView
       router: @
       locations: options.locations
+      userLocation: options.userLocation
 
   index: =>
     @app.displayIndex()

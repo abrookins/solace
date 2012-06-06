@@ -8,13 +8,19 @@ Copyright (c) 2012 Andrew Brookins. All Rights Reserved.
 
 import flask
 import os
+import cjson
 import decorators
 import craigslist
+
+from pyipinfodb import pyipinfodb
+from flaskext.cache import Cache
 
 
 app = flask.Flask(__name__)
 app.config.from_object('default_settings')
 app.config.from_envvar('SOLACE_SETTINGS')
+
+cache = Cache(app)
 
 
 # Serve static files if in debug mode.
@@ -25,6 +31,18 @@ if app.config['DEBUG']:
     })
 
 
+def get_location(ip_address):
+    """
+    Get location data from the PInfoDB API for `ip_address`.
+    """
+    key = os.getenv('IPINFODB_API_KEY', None)
+
+    if key is None:
+        return
+
+    return pyipinfodb.IPInfo(key).GetCity(ip_address)
+
+
 @app.route('/')
 def index():
     """
@@ -32,10 +50,13 @@ def index():
     as a JavaScript object on the page. This cuts down on AJAX calls back to the
     server for the initial page load.
     """
+    ip = flask.request.remote_addr
+
     with open('fixtures/locations.json') as locations_file:
         return flask.render_template(
             'index.html',
-            location_json=locations_file.read())
+            craigslist_locations=locations_file.read(),
+            user_location=cjson.encode(get_location(ip)))
 
 
 @decorators.jsonp
