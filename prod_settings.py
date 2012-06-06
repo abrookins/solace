@@ -2,7 +2,7 @@ import urlparse
 import os
 
 redis_url = urlparse.urlparse(
-    os.environ.get('REDISTOGO_URL', 'redis://localhost'))
+    os.environ.get('REDISTOGO_URL', 'redis://localhost:6379'))
 
 DEBUG = True
 CACHE_TYPE = 'redis'

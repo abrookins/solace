@@ -31,7 +31,8 @@ if app.config['DEBUG']:
     })
 
 
-def get_location(ip_address):
+@cache.memoize()
+def get_user_location(ip_address):
     """
     Get location data from the PInfoDB API for `ip_address`.
     """
@@ -43,6 +44,15 @@ def get_location(ip_address):
     return pyipinfodb.IPInfo(key).GetCity(ip_address)
 
 
+@cache.memoize()
+def get_craigslist_locations():
+    """
+    Load the JSON fixtures file of all known Craigslist locations and return it.
+    """
+    with open('fixtures/locations.json') as locations_file:
+        return locations_file.read()
+
+
 @app.route('/')
 def index():
     """
@@ -52,13 +62,13 @@ def index():
     """
     ip = flask.request.remote_addr
 
-    with open('fixtures/locations.json') as locations_file:
-        return flask.render_template(
-            'index.html',
-            craigslist_locations=locations_file.read(),
-            user_location=cjson.encode(get_location(ip)))
+    return flask.render_template(
+        'index.html',
+        craigslist_locations=get_craigslist_locations(),
+        user_location=cjson.encode(get_user_location(ip)))
 
 
+@cache.memoize(timeout=50)
 @decorators.jsonp
 @app.route('/search')
 def search():
