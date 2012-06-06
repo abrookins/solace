@@ -135,7 +135,7 @@ class Craigslist extends Backbone.Model
 
     # Craigslist expects spaces to be encoded with '+' because this data
     # supposedly comes from a form on their site.
-    encodedQuery = encodeURIComponent(query.replace(' ', '+'))
+    encodedQuery = encodeURIComponent(query.replace(/\s/g, '+'))
 
     return "#{@baseUrl}?#{locationQuery}&#{typeQuery}&q=#{encodedQuery}"
 

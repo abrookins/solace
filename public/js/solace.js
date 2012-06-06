@@ -121,7 +121,7 @@
       var encodedQuery, locationQuery, typeQuery;
       locationQuery = this.buildQueryString('location', locationNames);
       typeQuery = this.buildQueryString('type', [type]);
-      encodedQuery = encodeURIComponent(query.replace(' ', '+'));
+      encodedQuery = encodeURIComponent(query.replace(/\s/g, '+'));
       return "" + this.baseUrl + "?" + locationQuery + "&" + typeQuery + "&q=" + encodedQuery;
     };
     Craigslist.prototype.search = function(options) {
