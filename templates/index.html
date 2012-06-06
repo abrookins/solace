@@ -15,122 +15,124 @@
   <script src="js/solace.js"> </script>
 </head>
 <body>
-  <div id=header>
-    <div id=logo>
-      <h1><a href="/" tabindex=6>Solace</a></h1>
-      <p>Find anything, anywhere.</p>
-    </div>
-
-    <div id=search>
-      <form id="search-form" class="searchbox-wrapper">
-        <input id=query required class="searchbox-input" type="text" tabindex=1>
-        <input class="searchbox-search" id=submit type="submit" value="" tabindex=4>
-        <ul class="searchbox-dropdown" style="display:none;">
-          <li class="searchbox-close">
-            <a id=close-search class=remove href="javascript:" title="Close"
-              tabindex=5>x</a>
-          </li>
-          <li class="searchbox-filter">Category</li>
-          <li>
-            <select id=type required tabindex=2>
-              <option value="sss" selected="selected">For sale
-              <option value="hhh">Housing
-              <option value="jjj">Jobs
-              <option value="ggg">Gigs
-              <option value="bbb">Services
-            </select>
-          </li>
-          <li class=searchbox-filter>Location</li>
-          <li class="locations">
-            <input type=text id=location placeholder="Add a location" tabindex=3>
-            <div id=locations> </div>
-          </li>
-        </ul>
-      </form>
-    </div>
-  </div>
-
-  <div id=results>
-    <div id=sidebar>
-      <ul>
-        <li><a href="/#/help" id=view-help>Help</a></li>
-        <li><a href="/#/history" id=view-search-history>Search history</a></li>
-        <!--
-        <li><a class=category href="#jjj">Jobs</a></li>
-        <li><a class=category href="#hhh">Housing</a></li>
-        <li><a class=category href="#sss">For sale</a></li>
-        <li><a class=category href="#ggg">Gigs</a></li>
-        <li><a class=category href="#bbb">Services</a></li>
-        <li><a href="#results">Results</a></li>
-        <li><a href="#searches">Past Searches</a></li>
-        -->
-      </ul>
-
-      <div id="locationSeparator" class="separator hidden"></div>
-      <ul id="locationNav"></ul>
-
-      <div id="priceSeparator" class="separator hidden"></div>
-      <ul id="priceNav"></ul>
-
-      <div id="roomSeparator" class="separator hidden"></div>
-      <ul id="roomNav"></ul>
-
-      <div id="resetSeparator" class="separator hidden"></div>
-      <ul id="resetNav"></ul>
-    </div>
-
-    <div id=content>
-      <div id=result-listing class=hidden>
-        <div id=welcome>
-          <h2>What is this?</h2>
-          <p>Solace helps you find Craigslist ads in multiple cities, with one search. </p><p>We plan on adding more classified services soon!</p>
+  <div id="container">
+      <div id=header>
+        <div id=logo>
+          <h1><a href="/" tabindex=6>Solace</a></h1>
+          <p>Find anything, anywhere.</p>
         </div>
 
-        <div id=history class=hidden>
-          <h2>History</h2>
-          <p>Reuse your past searches. Or, <a href="javascript:" id=clear-history>clear your history</a>.</p>
-          <div class="success-message hidden"><p>Search history cleared.</p></div>
-          <div class=items></div>
-        </div>
-
-        <div id=help class=hidden>
-          <h2>Keyboard shortcuts</h2>
-          <p>Command and forward-slash key (⌘ /) or Control and forward-slash
-          key will open and close the search box.</p>
-        </div>
-
-        <div id=jjj class=hidden>
-          <h2>Jobs</h2>
-          <div class=items></div>
-        </div>
-
-        <div id=hhh class=hidden>
-          <h2>Housing</h2>
-          <!-- TODO: Price filtering -->
-          <!-- <input id=price-from type=text placeholder=Min> -->
-          <!-- <input id=price-to type=text placeholder=Max> -->
-          <div class=items></div>
-        </div>
-
-        <div id=sss class=hidden>
-          <h2>For sale</h2>
-          <!-- TODO: Price filtering -->
-          <!-- <input id=price-from type=text placeholder=Min> -->
-          <!-- <input id=price-to type=text placeholder=Max> -->
-          <div class=items></div>
-        </div>
-
-        <div id=bbb class=hidden>
-          <h2>Services</h2>
-          <div class=items></div>
+        <div id=search>
+          <form id="search-form" class="searchbox-wrapper">
+            <input id=query required class="searchbox-input" type="text" tabindex=1>
+            <input class="searchbox-search" id=submit type="submit" value="" tabindex=4>
+            <ul class="searchbox-dropdown" style="display:none;">
+              <li class="searchbox-close">
+                <a id=close-search class=remove href="javascript:" title="Close"
+                  tabindex=5>x</a>
+              </li>
+              <li class="searchbox-filter">Category</li>
+              <li>
+                <select id=type required tabindex=2>
+                  <option value="sss" selected="selected">For sale
+                  <option value="hhh">Housing
+                  <option value="jjj">Jobs
+                  <option value="ggg">Gigs
+                  <option value="bbb">Services
+                </select>
+              </li>
+              <li class=searchbox-filter>Location</li>
+              <li class="locations">
+                <input type=text id=location placeholder="Add a location" tabindex=3>
+                <div id=locations> </div>
+              </li>
+            </ul>
+          </form>
         </div>
       </div>
-    </div>
-  </div>
 
+      <div id=results>
+        <div id=sidebar>
+          <ul>
+            <li><a href="/#/help" id=view-help>Help</a></li>
+            <li><a href="/#/history" id=view-search-history>Search history</a></li>
+            <!--
+            <li><a class=category href="#jjj">Jobs</a></li>
+            <li><a class=category href="#hhh">Housing</a></li>
+            <li><a class=category href="#sss">For sale</a></li>
+            <li><a class=category href="#ggg">Gigs</a></li>
+            <li><a class=category href="#bbb">Services</a></li>
+            <li><a href="#results">Results</a></li>
+            <li><a href="#searches">Past Searches</a></li>
+            -->
+          </ul>
+
+          <div id="locationSeparator" class="separator hidden"></div>
+          <ul id="locationNav"></ul>
+
+          <div id="priceSeparator" class="separator hidden"></div>
+          <ul id="priceNav"></ul>
+
+          <div id="roomSeparator" class="separator hidden"></div>
+          <ul id="roomNav"></ul>
+
+          <div id="resetSeparator" class="separator hidden"></div>
+          <ul id="resetNav"></ul>
+        </div>
+
+        <div id=content>
+          <div id=result-listing class=hidden>
+            <div id=welcome>
+              <h2>What is this?</h2>
+              <p>Solace helps you find Craigslist ads in multiple cities, with one search. </p><p>We plan on adding more classified services soon!</p>
+            </div>
+
+            <div id=history class=hidden>
+              <h2>History</h2>
+              <p>Reuse your past searches. Or, <a href="javascript:" id=clear-history>clear your history</a>.</p>
+              <div class="success-message hidden"><p>Search history cleared.</p></div>
+              <div class=items></div>
+            </div>
+
+            <div id=help class=hidden>
+              <h2>Keyboard shortcuts</h2>
+              <p>Command and forward-slash key (⌘ /) or Control and forward-slash
+              key will open and close the search box.</p>
+            </div>
+
+            <div id=jjj class=hidden>
+              <h2>Jobs</h2>
+              <div class=items></div>
+            </div>
+
+            <div id=hhh class=hidden>
+              <h2>Housing</h2>
+              <!-- TODO: Price filtering -->
+              <!-- <input id=price-from type=text placeholder=Min> -->
+              <!-- <input id=price-to type=text placeholder=Max> -->
+              <div class=items></div>
+            </div>
+
+            <div id=sss class=hidden>
+              <h2>For sale</h2>
+              <!-- TODO: Price filtering -->
+              <!-- <input id=price-from type=text placeholder=Min> -->
+              <!-- <input id=price-to type=text placeholder=Max> -->
+              <div class=items></div>
+            </div>
+
+            <div id=bbb class=hidden>
+              <h2>Services</h2>
+              <div class=items></div>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
   <div id=footer>
     Copyright 2011 Andrew Brookins. All Caigslist content copyright Craigslist.
   </div>
+
 
   <script type="text/javascript">
     $(document).ready(function() {

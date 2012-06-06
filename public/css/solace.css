@@ -1,6 +1,9 @@
+body, html {
+    height: 100%;
+}
+
 body {
     margin: 0 0 0 0;
-    background: #967FA9;
     font-size: 0.9em;
 }
 
@@ -30,11 +33,18 @@ ul li {
     list-style: none;
 }
 
+div#container {
+    min-height: 100%;
+    margin: 0 auto -30px;
+    height: 100%;
+}
+
 div#header {
     overflow: visible;
     width: 100%;
     position: relative;
     float: left;
+    background: #967FA9;
 }
 
 div#logo h1,
@@ -157,7 +167,6 @@ form label {
 
 div#results {
     overflow: auto;
-    min-height: 640px;
     width: 100%;
     padding-top: 3em;
     background: white;
@@ -213,6 +222,11 @@ div#footer {
     font-size: .5em;
     text-align: center;
     color: white;
+    background: #967FA9;
+    height: 27px;
+    min-height: 27px;
+    float: left;
+    width: 100%;
 }
 
 .hidden {
