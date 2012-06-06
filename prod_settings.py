@@ -8,3 +8,5 @@ DEBUG = True
 CACHE_TYPE = 'redis'
 CACHE_REDIS_HOST = redis_url.hostname
 CACHE_REDIS_PORT = redis_url.port
+if redis_url.password:
+    CACHE_REDIS_PASSWORD = redis_url.password
