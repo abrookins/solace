@@ -53,6 +53,9 @@ def get_craigslist_locations():
         return locations_file.read()
 
 
+CRAIGSLIST_LOCATIONS = get_craigslist_locations()
+
+
 @app.route('/')
 def index():
     """
@@ -60,12 +63,12 @@ def index():
     as a JavaScript object on the page. This cuts down on AJAX calls back to the
     server for the initial page load.
     """
-    ip = flask.request.remote_addr
+    user_location = get_user_location(flask.request.remote_addr)
 
     return flask.render_template(
         'index.html',
-        craigslist_locations=get_craigslist_locations(),
-        user_location=cjson.encode(get_user_location(ip)))
+        craigslist_locations=CRAIGSLIST_LOCATIONS,
+        user_location=cjson.encode(user_location) if user_location else {})
 
 
 @cache.memoize(timeout=50)
