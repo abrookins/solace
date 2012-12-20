@@ -5,7 +5,6 @@ returns the results via JSONP.
 Copyright (c) 2012 Andrew Brookins. All Rights Reserved.
 """
 import json
-
 import flask
 import os
 import decorators
