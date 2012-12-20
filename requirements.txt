@@ -1,4 +1,4 @@
-git+git://github.com/mitsuhiko/flask.git#egg=Flask==0.9
+Flask==0.9
 mock==0.7.2
 git+git://github.com/abrookins/craigslist.git#egg=craigslist==0.09
 git+git://github.com/thadeusb/flask-cache.git#egg=Flask-Cache==0.5.0

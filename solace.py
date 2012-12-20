@@ -8,7 +8,6 @@ import json
 
 import flask
 import os
-import json
 import decorators
 import craigslist
 
@@ -55,7 +54,7 @@ def index():
         key=lambda city: city if ',' not in city else city.split(',')[1])
 
     return flask.render_template(
-        'index_bt.html',
+        'index.html',
         craigslist_cities=cities,
         craigslist_locations=CRAIGSLIST_LOCATIONS_JSON)
 
