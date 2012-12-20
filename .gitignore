@@ -4,3 +4,4 @@
 *.egg-info
 .hgignore
 .idea
+.DS_Store

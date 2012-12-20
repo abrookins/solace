@@ -4,16 +4,15 @@ returns the results via JSONP.
 
 Copyright (c) 2012 Andrew Brookins. All Rights Reserved.
 """
-
+import json
 
 import flask
 import os
-import cjson
+import json
 import decorators
 import craigslist
 
-from pyipinfodb import pyipinfodb
-from flaskext.cache import Cache
+from flask_cache import Cache
 
 
 app = flask.Flask(__name__)
@@ -32,19 +31,6 @@ if app.config['DEBUG']:
 
 
 @cache.memoize()
-def get_user_location(ip_address):
-    """
-    Get location data from the PInfoDB API for `ip_address`.
-    """
-    key = os.getenv('IPINFODB_API_KEY', None)
-
-    if key is None:
-        return
-
-    return pyipinfodb.IPInfo(key).GetCity(ip_address)
-
-
-@cache.memoize()
 def get_craigslist_locations():
     """
     Load the JSON fixtures file of all known Craigslist locations and return it.
@@ -53,7 +39,8 @@ def get_craigslist_locations():
         return locations_file.read()
 
 
-CRAIGSLIST_LOCATIONS = get_craigslist_locations()
+CRAIGSLIST_LOCATIONS_JSON = get_craigslist_locations()
+CRAIGSLIST_LOCATIONS = json.loads(CRAIGSLIST_LOCATIONS_JSON)
 
 
 @app.route('/')
@@ -63,12 +50,14 @@ def index():
     as a JavaScript object on the page. This cuts down on AJAX calls back to the
     server for the initial page load.
     """
-    user_location = get_user_location(flask.request.remote_addr)
+    cities = CRAIGSLIST_LOCATIONS['cities'].keys()
+    cities.sort(
+        key=lambda city: city if ',' not in city else city.split(',')[1])
 
     return flask.render_template(
-        'index.html',
-        craigslist_locations=CRAIGSLIST_LOCATIONS,
-        user_location=cjson.encode(user_location) if user_location else {})
+        'index_bt.html',
+        craigslist_cities=cities,
+        craigslist_locations=CRAIGSLIST_LOCATIONS_JSON)
 
 
 @cache.memoize(timeout=50)

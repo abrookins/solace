@@ -1,153 +1,236 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset=utf-8>
-<meta name="viewport" content="width=620">
-<title>Solace: Find Anything</title>
-<link href='http://fonts.googleapis.com/css?family=Merienda+One' rel='stylesheet' type='text/css'>
-  <link rel="stylesheet" href="css/ui-lightness/jquery-ui-1.8.16.custom.css">
-  <link rel="stylesheet" href="css/solace.css">
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
 
-  <script src="js/jquery-1.6.2.min.js"> </script>
-  <script src="js/jquery-ui-1.8.16.custom.min.js"> </script>
-  <script src="js/underscore.js"> </script>
-  <script src="js/backbone.js"> </script>
-  <script src="js/solace.js"> </script>
-</head>
-<body>
-  <div id="container">
-      <div id=header>
-        <div id=logo>
-          <h1><a href="/" tabindex=6>Solace</a></h1>
-          <p>Find anything, anywhere.</p>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+        <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="css/chosen.css" />
+        <link rel="stylesheet" href="css/bootstrap-chosen.css" />
+        <link rel="stylesheet" href="css/solace.css">
+        <link href='http://fonts.googleapis.com/css?family=Merienda+One' rel='stylesheet' type='text/css'>
+
+        <!-- TODO: Put in RequireJS -->
+        <script src="js/lib/modernizr-2.6.2.min.js"></script>
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+        <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
+
+        <div class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>
+
+                    <a class="brand" href="/#/">Solace</a>
+
+                    <div class="nav-collapse collapse">
+                        <ul class="nav" role="navigation">
+                            <li class="dropdown">
+                                <a id="search-menu" role="button"
+                                class="dropdown-toggle" data-toggle="dropdown"
+                                href="#">
+                                    <i class="icon-search icon-white"></i>
+                                    Search  <span class="caret"></span> </a>
+
+                            <div class="dropdown-menu" role="menu">
+                              <form class="form-search search">
+
+                                <div>
+                                    <input type="text" class="query"
+                                           tabindex=1 placeholder="What">
+
+                                    <select class="category" required
+                                            tabindex=2>
+                                        <option value="sss"
+                                                selected="selected">For sale
+                                        <option value="hhh">Housing
+                                        <option value="jjj">Jobs
+                                        <option value="ggg">Gigs
+                                        <option value="bbb">Services
+                                    </select>
+                                </div>
+
+                                <div class="search-query location-container">
+                                  <select class="location"
+                                          data-placeholder="Where"
+                                          tabindex=3 class="chzn-select"
+                                          multiple>
+                                      <option></option>
+                                      {% for loc in craigslist_cities %}
+                                          <option value="{{ loc }}">{{ loc }}</option>
+                                      {% endfor %}
+                                  </select>
+
+                                  <button type="submit" tabindex=4 class="btn">
+                                      Go
+                                  </button>
+                              </div>
+                          </form>
+                            </div>
+
+                            </li>
+                            <li>
+                                <a id="history-menu" href="/#/history">
+                                    <i class="icon-book icon-white"></i> History</a>
+                            </li>
+                        </ul>
+                    </div><!--/.nav-collapse -->
+            </div>
         </div>
 
-        <div id=search>
-          <form id="search-form" class="searchbox-wrapper">
-            <input id=query required class="searchbox-input" type="text" tabindex=1>
-            <input class="searchbox-search" id=submit type="submit" value="" tabindex=4>
-            <ul class="searchbox-dropdown" style="display:none;">
-              <li class="searchbox-close">
-                <a id=close-search class=remove href="javascript:" title="Close"
-                  tabindex=5>x</a>
-              </li>
-              <li class="searchbox-filter">Category</li>
-              <li>
-                <select id=type required tabindex=2>
-                  <option value="sss" selected="selected">For sale
-                  <option value="hhh">Housing
-                  <option value="jjj">Jobs
-                  <option value="ggg">Gigs
-                  <option value="bbb">Services
-                </select>
-              </li>
-              <li class=searchbox-filter>Location</li>
-              <li class="locations">
-                <input type=text id=location placeholder="Add a location" tabindex=3>
-                <div id=locations> </div>
-              </li>
-            </ul>
-          </form>
+        <div id="results" class="container">
+            <div class="row">
+                <div id="sidebar" class="span2">
+                    <ul>
+                        <!--
+                        <li><a class=category href="#jjj">Jobs</a></li>
+                        <li><a class=category href="#hhh">Housing</a></li>
+                        <li><a class=category href="#sss">For sale</a></li>
+                        <li><a class=category href="#ggg">Gigs</a></li>
+                        <li><a class=category href="#bbb">Services</a></li>
+                        <li><a href="#results">Results</a></li>
+                        <li><a href="#searches">Past Searches</a></li>
+                        -->
+                    </ul>
+
+                    <ul id="locationNav"></ul>
+
+                    <div id="priceSeparator" class="separator hidden"></div>
+                    <ul id="priceNav"></ul>
+
+                    <div id="roomSeparator" class="separator hidden"></div>
+                    <ul id="roomNav"></ul>
+
+                    <div id="resetSeparator" class="separator hidden"></div>
+                    <ul id="resetNav"></ul>
+                </div>
+
+                <div class="span9 content">
+                    <div id=result-listing class="">
+
+                        <div id=welcome>
+                            <h2>What is this?</h2>
+
+                            <p>Solace helps you find Craigslist ads in
+                                multiple cities, with one search. </p>
+
+                            <p>Click the "Search" button to get started!</p>
+                        </div>
+
+                        <div id=history class=hidden>
+                            <h2>History</h2>
+
+                            <p>Reuse your past searches. Or, <a
+                                    href="javascript:" id=clear-history>clear
+                                your history</a>.</p>
+
+                            <div class="success-message hidden"><p>Search
+                                history cleared.</p></div>
+                            <div class=items></div>
+                        </div>
+
+                        <div id=search class=hidden>
+                        <h2>Search</h2>
+
+                        </div>
+
+                        <div id=jjj class=hidden>
+                            <h2>Jobs</h2>
+
+                            <div class=items></div>
+                        </div>
+
+                        <div id=hhh class=hidden>
+                            <h2>Housing</h2>
+                            <!-- TODO: Price filtering -->
+                            <!-- <input id=price-from type=text placeholder=Min> -->
+                            <!-- <input id=price-to type=text placeholder=Max> -->
+                            <div class=items></div>
+                        </div>
+
+                        <div id=ggg class=hidden>
+                            <h2>Gigs</h2>
+
+                            <div class=items></div>
+                        </div>
+
+
+                        <div id=sss class=hidden>
+                            <h2>For sale</h2>
+                            <!-- TODO: Price filtering -->
+                            <!-- <input id=price-from type=text placeholder=Min> -->
+                            <!-- <input id=price-to type=text placeholder=Max> -->
+                            <div class=items></div>
+                        </div>
+
+                        <div id=bbb class=hidden>
+                            <h2>Services</h2>
+
+                            <div class=items></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+        <!-- /container -->
 
-      <div id=results>
-        <div id=sidebar>
-          <ul>
-            <li><a href="/#/help" id=view-help>Help</a></li>
-            <li><a href="/#/history" id=view-search-history>Search history</a></li>
-            <!--
-            <li><a class=category href="#jjj">Jobs</a></li>
-            <li><a class=category href="#hhh">Housing</a></li>
-            <li><a class=category href="#sss">For sale</a></li>
-            <li><a class=category href="#ggg">Gigs</a></li>
-            <li><a class=category href="#bbb">Services</a></li>
-            <li><a href="#results">Results</a></li>
-            <li><a href="#searches">Past Searches</a></li>
-            -->
-          </ul>
+        <script src="/js/lib/require-jquery.js"></script>
+        <script type="text/javascript">
 
-          <div id="locationSeparator" class="separator hidden"></div>
-          <ul id="locationNav"></ul>
+            require.config({
+                baseUrl: '/js',
+                priority: 'lib/underscore',
+                shim: {
+                    'lib/underscore': {
+                        exports: '_'
+                    },
+                    'lib/backbone': {
+                        deps: ['lib/underscore'],
+                        exports: 'Backbone'
+                    }
+                }
+            });
 
-          <div id="priceSeparator" class="separator hidden"></div>
-          <ul id="priceNav"></ul>
+            require([
+                'main',
+                'lib/backbone',
+                'lib/bootstrap.min'
+            ], function(main, Backbone) {
 
-          <div id="roomSeparator" class="separator hidden"></div>
-          <ul id="roomNav"></ul>
+                new main.Router({
+                    locations: {{ craigslist_locations|safe }}
+                });
 
-          <div id="resetSeparator" class="separator hidden"></div>
-          <ul id="resetNav"></ul>
-        </div>
+                Backbone.history.start();
+            });
+        </script>
 
-        <div id=content>
-          <div id=result-listing class=hidden>
-            <div id=welcome>
-              <h2>What is this?</h2>
-              <p>Solace helps you find Craigslist ads in multiple cities, with one search. </p><p>We plan on adding more classified services soon!</p>
-            </div>
-
-            <div id=history class=hidden>
-              <h2>History</h2>
-              <p>Reuse your past searches. Or, <a href="javascript:" id=clear-history>clear your history</a>.</p>
-              <div class="success-message hidden"><p>Search history cleared.</p></div>
-              <div class=items></div>
-            </div>
-
-            <div id=help class=hidden>
-              <h2>Keyboard shortcuts</h2>
-              <p>Command and forward-slash key (⌘ /) or Control and forward-slash
-              key will open and close the search box.</p>
-            </div>
-
-            <div id=jjj class=hidden>
-              <h2>Jobs</h2>
-              <div class=items></div>
-            </div>
-
-            <div id=hhh class=hidden>
-              <h2>Housing</h2>
-              <!-- TODO: Price filtering -->
-              <!-- <input id=price-from type=text placeholder=Min> -->
-              <!-- <input id=price-to type=text placeholder=Max> -->
-              <div class=items></div>
-            </div>
-
-            <div id=ggg class=hidden>
-              <h2>Gigs</h2>
-              <div class=items></div>
-            </div>
-
-
-            <div id=sss class=hidden>
-              <h2>For sale</h2>
-              <!-- TODO: Price filtering -->
-              <!-- <input id=price-from type=text placeholder=Min> -->
-              <!-- <input id=price-to type=text placeholder=Max> -->
-              <div class=items></div>
-            </div>
-
-            <div id=bbb} class=hidden>
-              <h2>Services</h2>
-              <div class=items></div>
-            </div>
-          </div>
-        </div>
-      </div>
-  </div>
-  <div id=footer>
-    Copyright 2011 Andrew Brookins. All Caigslist content copyright Craigslist.
-  </div>
-
-
-  <script type="text/javascript">
-    $(document).ready(function() {
-        new solace.Router({
-            locations: {{ craigslist_locations|safe }},
-            userLocation: {{ user_location|safe }}
-        });
-        Backbone.history.start();
-    });
-  </script>
-</body>
+        <script>
+            var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
+            (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+            g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+            s.parentNode.insertBefore(g,s)}(document,'script'));
+        </script>
+    </body>
 </html>
+
