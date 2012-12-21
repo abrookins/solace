@@ -250,6 +250,11 @@ define([
         e.stopPropagation()
       )
 
+      $('.search-menu, .search-menu > form').live('click', (e) ->
+        console.log 'click'
+        e.stopPropagation()
+      )
+
       # Keyboard shortcuts
       $(document).keydown(@handleKeydown)
 

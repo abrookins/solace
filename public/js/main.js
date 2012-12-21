@@ -302,6 +302,10 @@
         $('.search-choice-close').live('click', function(e) {
           return e.stopPropagation();
         });
+        $('.search-menu, .search-menu > form').live('click', function(e) {
+          console.log('click');
+          return e.stopPropagation();
+        });
         $(document).keydown(this.handleKeydown);
         return this.startAutocomplete();
       };
