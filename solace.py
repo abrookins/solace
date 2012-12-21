@@ -4,11 +4,11 @@ returns the results via JSONP.
 
 Copyright (c) 2012 Andrew Brookins. All Rights Reserved.
 """
+import decorators
+import craigslist
 import json
 import flask
 import os
-import decorators
-import craigslist
 
 from flask_cache import Cache
 
@@ -85,8 +85,9 @@ def search():
     query = flask.request.args.get('q', None)
     listings = {}
 
-    for location in locations:
-        listings[location] = craigslist.search(location, category, query)
+    if query and locations and category:
+        for location in locations:
+            listings[location] = craigslist.search(location, category, query)
 
     return flask.jsonify(result=listings)
 
