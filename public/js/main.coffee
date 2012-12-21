@@ -251,7 +251,6 @@ define([
       )
 
       $('.search-menu, .search-menu > form').live('click', (e) ->
-        console.log 'click'
         e.stopPropagation()
       )
 
