@@ -24,6 +24,7 @@
         this.url = options.url;
         this.query = options.query;
         this.type = options.type;
+        this.params = options.params;
         this.locations = options.locations;
         this.cachedResult = options.cachedResult;
         this.searchCacheKey = options.searchCacheKey;
@@ -37,7 +38,8 @@
           query: this.query,
           result: this.result,
           locations: this.locations,
-          cacheTtl: this.cacheTtl
+          cacheTtl: this.cacheTtl,
+          params: this.params
         };
       };
 
@@ -49,6 +51,7 @@
           query: obj.query,
           type: obj.type,
           result: obj.result,
+          params: obj.params,
           locations: obj.locations,
           cacheTtl: obj.cacheTtl,
           cachedResult: true
@@ -75,6 +78,15 @@
             }
           });
         }
+      };
+
+      CraigslistSearch.prototype.getParams = function() {
+        var params;
+        params = [];
+        _.each(this.params, function(param) {
+          return params.push("" + param[0] + "=" + param[1]);
+        });
+        return params;
       };
 
       CraigslistSearch.prototype.getCreatedAtTime = function() {
@@ -131,17 +143,23 @@
         })()).join('&');
       };
 
-      Craigslist.prototype.buildQueryUrl = function(locationNames, type, query) {
-        var encodedQuery, locationQuery, typeQuery;
+      Craigslist.prototype.buildQueryUrl = function(locationNames, type, query, params) {
+        var encodedQuery, locationQuery, typeQuery, url;
         locationQuery = this.buildQueryString('location', locationNames);
         typeQuery = this.buildQueryString('type', [type]);
         encodedQuery = encodeURIComponent(query.replace(/\s/g, '+'));
-        return "" + this.baseUrl + "?" + locationQuery + "&" + typeQuery + "&q=" + encodedQuery;
+        url = "" + this.baseUrl + "?" + locationQuery + "&" + typeQuery + "&q=" + encodedQuery;
+        if (params && params.length) {
+          _.each(params, function(param) {
+            return url += "&" + param[0] + "=" + param[1];
+          });
+        }
+        return url;
       };
 
       Craigslist.prototype.search = function(options) {
         var result, url;
-        url = this.buildQueryUrl(options.locations, options.type, options.query);
+        url = this.buildQueryUrl(options.locations, options.type, options.query, options.params);
         result = this.getSearchFromCache(url);
         if (!result) {
           result = new CraigslistSearch({
@@ -149,6 +167,7 @@
             type: options.type,
             query: options.query,
             locations: options.locations,
+            params: options.params,
             searchCacheKey: this.searchCacheKey
           });
         }

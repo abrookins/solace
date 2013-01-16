@@ -11,6 +11,8 @@ define([
   #### CraigslistSearch ####
   # A Craigslist search. On success, parses the resulting items and caches itself
   # as JSON in localStorage, keyed to the URL of the search.
+  #
+  # TODO: Refactor to use Backbone's get() and set() API.
   class CraigslistSearch extends Backbone.Model
     initialize: (options) ->
       @createdAt = null
@@ -18,6 +20,7 @@ define([
       @url = options.url
       @query = options.query
       @type = options.type
+      @params = options.params
       @locations = options.locations
       @cachedResult = options.cachedResult
       @searchCacheKey = options.searchCacheKey
@@ -33,6 +36,7 @@ define([
       result: @result
       locations: @locations
       cacheTtl: @cacheTtl
+      params: @params
 
     fromJSON: (json) ->
       obj = JSON.parse(json)
@@ -42,6 +46,7 @@ define([
         query: obj.query
         type: obj.type
         result: obj.result
+        params: obj.params
         locations: obj.locations
         cacheTtl: obj.cacheTtl
         cachedResult: true
@@ -64,6 +69,15 @@ define([
               @result.created = new Date().toUTCString()
               @cacheResult()
             @trigger('searchFinished')
+
+    getParams: ->
+      params = []
+
+      _.each(@params, (param) ->
+        params.push("#{param[0]}=#{param[1]}")
+      )
+
+      return params
 
     getCreatedAtTime: ->
       result = @.get('result')
@@ -115,7 +129,7 @@ define([
     # the user's query.
     #
     # Returns a URL string.
-    buildQueryUrl: (locationNames, type, query) ->
+    buildQueryUrl: (locationNames, type, query, params) ->
       locationQuery = @buildQueryString('location', locationNames)
       typeQuery = @buildQueryString('type', [type])
 
@@ -123,12 +137,21 @@ define([
       # supposedly comes from a form on their site.
       encodedQuery = encodeURIComponent(query.replace(/\s/g, '+'))
 
-      return "#{@baseUrl}?#{locationQuery}&#{typeQuery}&q=#{encodedQuery}"
+      url = "#{@baseUrl}?#{locationQuery}&#{typeQuery}&q=#{encodedQuery}"
+
+      if params and params.length
+        _.each(params, (param) ->
+          url += "&#{param[0]}=#{param[1]}"
+        )
+
+      return url
 
     # Use the back-end web service to search Craigslist for a query in the chosen
     # locations.
     search: (options) ->
-      url = @buildQueryUrl(options.locations, options.type, options.query)
+      url = @buildQueryUrl(
+        options.locations, options.type, options.query, options.params)
+
       result = @getSearchFromCache(url)
 
       if not result
@@ -137,6 +160,7 @@ define([
           type: options.type
           query: options.query
           locations: options.locations
+          params: options.params
           searchCacheKey: @searchCacheKey
 
       return result

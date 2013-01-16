@@ -41,60 +41,83 @@
                         <span class="icon-bar"></span>
                     </a>
 
+                    <span class="loading hide"></span>
                     <a class="brand" href="/#/">Solace</a>
 
-                    <div class="nav-collapse collapse">
-                        <ul class="nav" role="navigation">
-                            <li class="dropdown">
-                                <a id="search-menu" role="button"
-                                class="dropdown-toggle" data-toggle="dropdown"
-                                href="#">
-                                    <i class="icon-search icon-white"></i>
-                                    Search  <span class="caret"></span> </a>
+                <div class="nav-collapse collapse">
+                    <ul class="nav" role="navigation">
+                        <li class="dropdown">
+                            <a id="search-menu" role="button"
+                               class="dropdown-toggle" data-toggle="dropdown"
+                               href="#">
+                                <i class="icon-search icon-white"></i>
+                                Search <span class="caret"></span> </a>
 
-                            <div class="dropdown-menu search-menu" role="menu">
-                              <form class="form-search search">
+                            <div class="dropdown-menu search-menu"
+                                 role="menu">
+                                <form class="form-search search">
+                                    <div>
+                                        <input type="text" class="query"
+                                               tabindex=1
+                                               placeholder="">
 
-                                <div>
-                                    <input type="text" class="query"
-                                           tabindex=1 placeholder="What">
+                                        <select class="category" required
+                                                tabindex=2>
+                                            <option value="sss"
+                                                    selected="selected">For
+                                                sale
+                                            <option value="hhh">Housing
+                                            <option value="jjj">Jobs
+                                            <option value="ggg">Gigs
+                                            <option value="bbb">Services
+                                        </select>
+                                    </div>
 
-                                    <select class="category" required
-                                            tabindex=2>
-                                        <option value="sss"
-                                                selected="selected">For sale
-                                        <option value="hhh">Housing
-                                        <option value="jjj">Jobs
-                                        <option value="ggg">Gigs
-                                        <option value="bbb">Services
-                                    </select>
-                                </div>
+                                    <div class="form-extra hide hhh">
+                                        <div class ="form-inline">
+                                            <label class='price-label'>Price</label>
+                                            <input type="text" name="min_price" class="input-small min-price" tabindex=3> min
+                                            <input type="text" name="max_price" class="input-small max-price" tabindex=4> max
+                                        </div>
 
-                                <div class="search-query location-container">
-                                  <select class="location"
-                                          data-placeholder="Where"
-                                          tabindex=3 class="chzn-select"
-                                          multiple>
-                                      <option></option>
-                                      {% for loc in craigslist_cities %}
-                                          <option value="{{ loc }}">{{ loc }}</option>
-                                      {% endfor %}
-                                  </select>
+                                        <div class ="form-inline">
+                                            <label>Rooms</label>
+                                            <input type="text" name="min_rooms" class="input-small min-bedrooms" tabindex=5> min
+                                            <input type="text" name="max_rooms" class="input-small max-bedrooms" tabindex=6> max
+                                        </div>
+                                    </div>
 
-                                  <button type="submit" tabindex=4 class="btn">
-                                      Go
-                                  </button>
-                              </div>
-                          </form>
+                                    <div class="search-query location-container">
+                                        <select class="location"
+                                                data-placeholder="Add a location"
+                                                tabindex=7
+                                                class="chzn-select"
+                                                multiple>
+                                            <option></option>
+                                            {% for loc in craigslist_cities %}
+                                                <option value="{{ loc }}">{{ loc }}</option>
+                                            {% endfor %}
+                                        </select>
+
+                                        <button type="submit" tabindex=8
+                                                class="btn">
+                                            Go
+                                        </button>
+
+
+                                        <span class="location-help help-block">Add as many locations as you want.</span>
+                                    </div>
+                                </form>
                             </div>
 
-                            </li>
-                            <li>
-                                <a id="history-menu" href="/#/history">
-                                    <i class="icon-time icon-white"></i> History</a>
-                            </li>
-                        </ul>
-                    </div><!--/.nav-collapse -->
+                        </li>
+                        <li>
+                            <a id="history-menu" href="/#/history">
+                                <i class="icon-time icon-white"></i> History</a>
+                        </li>
+                    </ul>
+                </div>
+                <!--/.nav-collapse -->
             </div>
         </div>
 

@@ -63,6 +63,8 @@
 
         this.handleSearchClick = __bind(this.handleSearchClick, this);
 
+        this.categoryChanged = __bind(this.categoryChanged, this);
+
         this.search = __bind(this.search, this);
 
         this.toggleSearchDropdown = __bind(this.toggleSearchDropdown, this);
@@ -70,10 +72,6 @@
         this.clearLocation = __bind(this.clearLocation, this);
 
         this.startAutocomplete = __bind(this.startAutocomplete, this);
-
-        this.receiveKey = __bind(this.receiveKey, this);
-
-        this.handleKeydown = __bind(this.handleKeydown, this);
         return AppView.__super__.constructor.apply(this, arguments);
       }
 
@@ -81,10 +79,12 @@
         var city, url, _ref;
         this.router = options.router;
         this.initComplete = false;
-        this.locationsDiv = $('.location-container');
         this.locationInput = $('.location');
         this.searchForm = $('.search');
+        this.category = $('.category');
+        this.query = $('.query');
         this.searchButton = this.searchForm.find('.btn');
+        this.loadingImage = $('.loading');
         this.maxSearchRetry = 3;
         this.locations = options.locations;
         this.locationsReversed = {};
@@ -97,46 +97,12 @@
         this.searchClicked = false;
         this.itemViews = [];
         this.searchButton.live('click', this.handleSearchClick);
+        this.category.live('change', this.categoryChanged);
         $('#clear-history').live('click', this.clearSavedSearches);
-        $('.search-choice-close').live('click', function(e) {
+        $('.search-choice-close, .search-menu, .search-menu > form').live('click', function(e) {
           return e.stopPropagation();
         });
-        $('.search-menu, .search-menu > form').live('click', function(e) {
-          return e.stopPropagation();
-        });
-        $(document).keydown(this.handleKeydown);
         return this.startAutocomplete();
-      };
-
-      AppView.prototype.hasValidModifierKey = function(keyEvent) {
-        switch (keyEvent.which) {
-          case 91:
-          case 93:
-          case 17:
-            return true;
-          default:
-            return false;
-        }
-      };
-
-      AppView.prototype.handleKeydown = function(e) {
-        var hasValidModifier;
-        hasValidModifier = this.hasValidModifierKey(e);
-        if (hasValidModifier) {
-          return this.validModifierKeyPressed || (this.validModifierKeyPressed = hasValidModifier);
-        } else {
-          return this.receiveKey(e);
-        }
-      };
-
-      AppView.prototype.receiveKey = function(keyEvent) {
-        switch (keyEvent.which) {
-          case 191:
-            if (this.validModifierKeyPressed) {
-              $('.query').focus();
-            }
-            return this.validModifierKeyPressed = false;
-        }
       };
 
       AppView.prototype.startAutocomplete = function() {
@@ -153,7 +119,8 @@
         chosen = this.locationInput.data('chosen');
         item = chosen.results_data[position];
         item.selected = true;
-        return chosen.choice_build(item);
+        chosen.choice_build(item);
+        return $('.search-field').find('input').val(' ');
       };
 
       AppView.prototype.clearLocation = function() {
@@ -165,11 +132,11 @@
       };
 
       AppView.prototype.showLoadingIcon = function() {
-        return this.searchButton.addClass('loading');
+        return this.loadingImage.removeClass('hide');
       };
 
       AppView.prototype.hideLoadingIcon = function() {
-        return this.searchButton.removeClass('loading');
+        return this.loadingImage.addClass('hide');
       };
 
       AppView.prototype.toggleSearchDropdown = function() {
@@ -180,14 +147,14 @@
         var l, loc, locations;
         locations = _.uniq((function() {
           var _i, _len, _ref, _results;
-          _ref = this.locationsDiv.find('span');
+          _ref = $('.chzn-choices').find('span');
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             l = _ref[_i];
             _results.push($(l).text());
           }
           return _results;
-        }).call(this));
+        })());
         return (function() {
           var _i, _len, _results;
           _results = [];
@@ -197,6 +164,21 @@
           }
           return _results;
         })();
+      };
+
+      AppView.prototype.getSearchParams = function() {
+        var params;
+        params = [];
+        _.each($('.form-extra input'), function(input) {
+          var name, val;
+          input = $(input);
+          name = input.attr('name');
+          val = input.val();
+          if (name && val) {
+            return params.push("" + name + "=" + val);
+          }
+        });
+        return params;
       };
 
       AppView.prototype.getLocationUrls = function(locations) {
@@ -212,21 +194,22 @@
         }).call(this);
       };
 
-      AppView.prototype.search = function(locations, type, query) {
+      AppView.prototype.search = function(locations, type, query, params) {
         var locationUrls,
           _this = this;
         if (!this.initComplete) {
           this.bind('initComplete', function() {
-            return _this.search(locations, type, query);
+            return _this.search(locations, type, query, params);
           });
           return;
         }
-        this.setFormElements(locations, type, query);
+        this.setFormElements(locations, type, query, params);
         this.showLoadingIcon();
         locationUrls = this.getLocationUrls(locations);
         this.lastSearch = this.craigslist.search({
           type: type,
           query: query,
+          params: params,
           locations: locationUrls
         });
         this.lastSearch.bind('searchFinished', this.displaySearchResults);
@@ -245,42 +228,53 @@
       AppView.prototype.buildUrlForExistingSearch = function(search) {
         var locations;
         locations = this.getLocationNamesForUrls(search.locations);
-        return '/#' + this.buildSearchUrl(locations, search.type, search.query);
+        return '/#' + this.buildSearchUrl(locations, search.type, search.query, search.params);
       };
 
-      AppView.prototype.buildSearchUrlFragment = function(locations, type, query) {
-        var encodedLocations, encodedQuery, encodedType;
+      AppView.prototype.buildSearchUrlFragment = function(locations, type, query, params) {
+        var encodedLocations, encodedQuery, encodedType, fragment;
         encodedType = encodeURIComponent(type);
         encodedLocations = encodeURIComponent(locations.join('&'));
         encodedQuery = encodeURIComponent(query);
-        return "" + encodedLocations + "/" + encodedType + "/" + encodedQuery;
+        fragment = "" + encodedLocations + "/" + encodedType + "/" + encodedQuery;
+        if (params && params.length) {
+          fragment += "/" + encodeURIComponent(params.join('&'));
+        }
+        return fragment;
       };
 
-      AppView.prototype.buildSearchUrl = function(locations, type, query) {
+      AppView.prototype.buildSearchUrl = function(locations, type, query, params) {
         var searchFragment;
-        searchFragment = this.buildSearchUrlFragment(locations, type, query);
+        searchFragment = this.buildSearchUrlFragment(locations, type, query, params);
         return "/search/" + searchFragment;
       };
 
+      AppView.prototype.categoryChanged = function(event) {
+        var category, extraFields;
+        event.preventDefault();
+        $('.form-extra').addClass('hide');
+        category = this.category.val();
+        extraFields = $('.form-extra.' + category);
+        if (extraFields.length) {
+          return extraFields.removeClass('hide');
+        }
+      };
+
       AppView.prototype.handleSearchClick = function(event) {
-        var locations, query, searchUrl, type;
+        var locations, params, query, searchUrl, type;
         event.preventDefault();
         query = $('.query').val();
         type = $('.category').val();
         locations = this.getSearchLocations();
-        if (query && type && locations.length > 0) {
-          this.searchClicked = true;
-          searchUrl = this.buildSearchUrl(locations, type, query);
-          this.router.navigate(searchUrl);
-          return this.toggleSearchDropdown();
-        }
+        params = this.getSearchParams();
+        this.searchClicked = true;
+        searchUrl = this.buildSearchUrl(locations, type, query, params);
+        this.router.navigate(searchUrl);
+        return this.toggleSearchDropdown();
       };
 
       AppView.prototype.removeLocation = function() {
-        $(this).parent().remove();
-        if (this.locationsDiv.children('span').length === 0) {
-          return this.locationInput.css("top", 0);
-        }
+        return $(this).parent().remove();
       };
 
       AppView.prototype.displaySearchResults = function() {
@@ -393,7 +387,8 @@
         var i, li, linkText, locationNames, min, roomCounts, roomNav, roomUpperBounds, search, upperBound, _i, _len;
         roomNav = $('ul#roomNav');
         locationNames = this.getLocationNamesForUrls(this.lastSearch.locations);
-        search = this.buildSearchUrlFragment(locationNames, this.lastSearch.type, this.lastSearch.query);
+        console.log('here', this.lastSearch.params);
+        search = this.buildSearchUrlFragment(locationNames, this.lastSearch.type, this.lastSearch.query, this.lastSearch.getParams());
         roomCounts = this.getFacetCounts([1, 2, 3, 4, 5], rooms);
         roomUpperBounds = _.keys(roomCounts);
         $('#roomSeparator').removeClass('hidden');
@@ -414,7 +409,7 @@
         var availablePriceGroups, i, li, linkText, locationNames, min, priceCounts, priceNav, priceUpperBounds, search, upperBound, _i, _len;
         priceNav = $('ul#priceNav');
         locationNames = this.getLocationNamesForUrls(this.lastSearch.locations);
-        search = this.buildSearchUrlFragment(locationNames, this.lastSearch.type, this.lastSearch.query);
+        search = this.buildSearchUrlFragment(locationNames, this.lastSearch.type, this.lastSearch.query, this.lastSearch.getParams());
         availablePriceGroups = [50, 250, 500, 1000, 2000, 5000, 20000, 50000, 100000, 150000, 200000, 400000, 600000, 1000000];
         priceCounts = this.getFacetCounts(availablePriceGroups, prices);
         priceUpperBounds = _.keys(priceCounts);
@@ -432,8 +427,8 @@
         return this.addResetFilterNavItem(search);
       };
 
-      AppView.prototype.setFormElements = function(locations, type, query) {
-        var loc, _i, _len;
+      AppView.prototype.setFormElements = function(locations, type, query, params) {
+        var input, loc, param, _i, _j, _len, _len1, _results;
         this.clearLocation();
         this.clearChosenLocations();
         if (!this.searchClicked) {
@@ -443,8 +438,24 @@
             this.addSearchLocation(loc);
           }
         }
-        $('.category').val(type);
-        return $('.query').val(query);
+        this.category.val(type);
+        if (type === 'hhh') {
+          this.category.trigger('change');
+        }
+        this.query.val(query);
+        if (params && params.length) {
+          _results = [];
+          for (_j = 0, _len1 = params.length; _j < _len1; _j++) {
+            param = params[_j];
+            input = this.searchForm.find("input[name=" + param[0] + "]");
+            if (input.length) {
+              _results.push(input.val(param[1]));
+            } else {
+              _results.push(void 0);
+            }
+          }
+          return _results;
+        }
       };
 
       AppView.prototype.clearSidebar = function() {
@@ -557,6 +568,17 @@
           }
           return _results;
         })();
+      };
+
+      AppView.prototype.parseSearchParams = function(paramString) {
+        var params;
+        params = [];
+        _.each(paramString.split('&'), function(param) {
+          var parts;
+          parts = param.split('=');
+          return params.push([parts[0], parts[1]]);
+        });
+        return params;
       };
 
       AppView.prototype.filter = function(options) {

@@ -45,62 +45,28 @@ define([
     initialize: (options) ->
       @router = options.router
       @initComplete = false
-      @locationsDiv = $('.location-container')
       @locationInput = $('.location')
       @searchForm = $('.search')
+      @category = $('.category')
+      @query = $('.query')
       @searchButton = @searchForm.find('.btn')
+      @loadingImage = $('.loading')
       @maxSearchRetry = 3
       @locations = options.locations
       @locationsReversed = {}
       @locationsReversed[url] = city for city, url of @locations['cities']
       @craigslist = new models.Craigslist
       @searchClicked = false
-
-      # TODO: This should be a Collection.
       @itemViews = []
 
       @searchButton.live('click', @handleSearchClick)
+      @category.live('change', @categoryChanged)
       $('#clear-history').live('click', @clearSavedSearches)
-
-      # Stop the 'X' button on locations from closing the search box.
-      $('.search-choice-close').live('click', (e) ->
+      $('.search-choice-close, .search-menu, .search-menu > form').live('click', (e) ->
         e.stopPropagation()
       )
-
-      $('.search-menu, .search-menu > form').live('click', (e) ->
-        e.stopPropagation()
-      )
-
-      # Keyboard shortcuts
-      $(document).keydown(@handleKeydown)
 
       @startAutocomplete()
-
-    # Was a Command or Control key combo pressed, e.g., Command+/
-    hasValidModifierKey: (keyEvent) ->
-      switch keyEvent.which
-        # Cmd, Cmd, Ctrl
-        when 91, 93, 17
-          return true
-        else
-          return false
-
-    # Handle keyboard presses - for keyboard shortcuts.
-    handleKeydown: (e) =>
-      hasValidModifier = @hasValidModifierKey(e)
-
-      if hasValidModifier
-        @validModifierKeyPressed or= hasValidModifier
-      else
-        @receiveKey(e)
-
-    receiveKey: (keyEvent) =>
-      switch keyEvent.which
-        # Forward-slash (/) key.
-        when 191
-          if @validModifierKeyPressed
-            $('.query').focus()
-          @validModifierKeyPressed = false
 
     # Load a Chosen autocomplete widget containing search locations.
     #
@@ -121,6 +87,7 @@ define([
       item = chosen.results_data[position];
       item.selected = true;
       chosen.choice_build(item)
+      $('.search-field').find('input').val(' ')
 
     # Clear the faux location input.
     clearLocation: =>
@@ -132,10 +99,10 @@ define([
 
     # Set search button background with loading spinner.
     showLoadingIcon: ->
-      @searchButton.addClass('loading')
+      @loadingImage.removeClass('hide')
 
     hideLoadingIcon: ->
-       @searchButton.removeClass('loading')
+      @loadingImage.addClass('hide')
 
     # Hide the search dropdown menu.
     toggleSearchDropdown: =>
@@ -145,12 +112,26 @@ define([
     getSearchLocations: ->
       # Get a unique list of locations the user chose.
       locations = _.uniq(
-        $(l).text() for l in @locationsDiv.find('span'))
+        $(l).text() for l in $('.chzn-choices').find('span'))
 
       # Create an array of strings in the form 'location={location name}'
       # suitable for joining and stuffing into a search URL.
       # Each location in `locations` will have an 'x' that we need to slice off.
       return ("location=#{loc}" for loc in locations)
+
+    getSearchParams: ->
+      params = []
+
+      _.each($('.form-extra input'), (input) ->
+        input = $(input)
+        name = input.attr('name')
+        val = input.val()
+
+        if name and val
+          params.push("#{name}=#{val}")
+      )
+
+      return params
 
     # Transform the user's chosen locations into an array of CraigsList location
     # URLs, e.g. 'http://portland.craigslist.org', that we can pass to the server.
@@ -164,22 +145,24 @@ define([
     # Passes the search type, query and locations to a Craigslist instance and
     # binds to the object's 'searchFinished' event, so the AppView can refresh
     # when it has results.
-    search: (locations, type, query) =>
+    search: (locations, type, query, params) =>
       # Perform the search immediately if the app view is loaded. Otherwise, bind
       # to initComplete and search when initialization has finished.
       if not @initComplete
-        @bind('initComplete', () => @search(locations, type, query))
+        @bind('initComplete', () => @search(locations, type, query, params))
         return
 
-      @setFormElements(locations, type, query)
+      @setFormElements(locations, type, query, params)
       @showLoadingIcon()
 
       locationUrls = @getLocationUrls(locations)
 
-      @lastSearch = @craigslist.search
+      @lastSearch = @craigslist.search({
         type: type
         query: query
+        params: params
         locations: locationUrls
+      })
 
       @lastSearch.bind('searchFinished', @displaySearchResults)
       @lastSearch.run()
@@ -196,21 +179,35 @@ define([
     # an existing CraigslistSearch object `search`.
     buildUrlForExistingSearch: (search) ->
       locations = @getLocationNamesForUrls(search.locations)
-      return '/#'+@buildSearchUrl(locations, search.type, search.query)
+      return '/#' + @buildSearchUrl(
+        locations, search.type, search.query, search.params)
 
     # Return everything needed for a front-end search URL given a `locations` (an
     # array of human-readable location names), `type` (a string like 'jjj') and
     # `query` (the user's search), except the '/#/search/' portion.
-    buildSearchUrlFragment: (locations, type, query) ->
+    buildSearchUrlFragment: (locations, type, query, params) ->
       encodedType = encodeURIComponent(type)
       encodedLocations = encodeURIComponent(locations.join('&'))
       encodedQuery = encodeURIComponent(query)
-      return "#{encodedLocations}/#{encodedType}/#{encodedQuery}"
+      fragment = "#{encodedLocations}/#{encodedType}/#{encodedQuery}"
+
+      if params and params.length
+        fragment += "/" + encodeURIComponent(params.join('&'))
+
+      return fragment
 
     # Build a front-end search URL.
-    buildSearchUrl: (locations, type, query) ->
-      searchFragment = @buildSearchUrlFragment(locations, type, query)
+    buildSearchUrl: (locations, type, query, params) ->
+      searchFragment = @buildSearchUrlFragment(locations, type, query, params)
       return "/search/#{searchFragment}"
+
+    categoryChanged: (event) =>
+      event.preventDefault()
+      $('.form-extra').addClass('hide')
+      category = @category.val()
+      extraFields = $('.form-extra.' + category)
+      if extraFields.length
+        extraFields.removeClass('hide')
 
     # Handle a user-initiated search via the search form.
     #
@@ -222,24 +219,18 @@ define([
       query = $('.query').val()
       type = $('.category').val()
       locations = @getSearchLocations()
+      params = @getSearchParams()
 
-      # On Chrome, the following code will allow the browser's form validation
-      # engine to kick in if we don't have all required values for a search.
-      # TODO: Cross-browser form field validation.
-      if query and type and locations.length > 0
-        # Differentiate between page load on a search URL and the user
-        # initiating search, so we don't try to rebuild the location box.
-        @searchClicked = true
-        searchUrl = @buildSearchUrl(locations, type, query)
-        @router.navigate(searchUrl)
-        @toggleSearchDropdown()
+      # Differentiate between page load on a search URL and the user
+      # initiating search, so we don't try to rebuild the location box.
+      @searchClicked = true
+      searchUrl = @buildSearchUrl(locations, type, query, params)
+      @router.navigate(searchUrl)
+      @toggleSearchDropdown()
 
     # Remove a location from the location div.
     removeLocation: () ->
       $(@).parent().remove()
-
-      if @locationsDiv.children('span').length == 0
-        @locationInput.css("top", 0)
 
     # When a Craigslist instance has results, display them on the page,
     # separated by headers for each location the user searched.
@@ -300,7 +291,7 @@ define([
         if @itemViews.length == 0
           $("<p>").text("No results for this location.").appendTo(resultType)
 
-      # Display search facets if appropriate.
+      # Display search facets.
       if prices.length > 0
         @displayPriceFacet(prices)
       if rooms.length > 0
@@ -313,7 +304,7 @@ define([
       min = _.min(values)
       max = _.max(values)
 
-      # Make  the minimum value the head of the array and the max the tail.
+      # Make the minimum value the head of the array and the max the tail.
       availableGroups.unshift(min)
       availableGroups.push(max)
 
@@ -352,8 +343,9 @@ define([
     displayRoomCountFacet: (rooms) ->
       roomNav = $('ul#roomNav')
       locationNames = @getLocationNamesForUrls(@lastSearch.locations)
+      console.log 'here', @lastSearch.params
       search = @buildSearchUrlFragment(
-        locationNames, @lastSearch.type, @lastSearch.query)
+        locationNames, @lastSearch.type, @lastSearch.query, @lastSearch.getParams())
       roomCounts = @getFacetCounts([1, 2, 3, 4, 5], rooms)
       roomUpperBounds = _.keys(roomCounts)
 
@@ -377,7 +369,7 @@ define([
       priceNav = $('ul#priceNav')
       locationNames = @getLocationNamesForUrls(@lastSearch.locations)
       search = @buildSearchUrlFragment(
-        locationNames, @lastSearch.type, @lastSearch.query)
+        locationNames, @lastSearch.type, @lastSearch.query, @lastSearch.getParams())
 
       availablePriceGroups = [50, 250, 500, 1000, 2000, 5000, 20000,
                               50000, 100000, 150000, 200000, 400000, 600000,
@@ -405,7 +397,7 @@ define([
     #
     # This is called when the app receives a search query URI when the app is
     # unitialized, usually from a bookmark or saved search.
-    setFormElements: (locations, type, query) =>
+    setFormElements: (locations, type, query, params) =>
       @clearLocation()
       @clearChosenLocations()
 
@@ -416,9 +408,18 @@ define([
         for loc in locations
           @addSearchLocation(loc)
 
+      @category.val(type)
 
-      $('.category').val(type)
-      $('.query').val(query)
+      if type == 'hhh'
+        @category.trigger('change')
+
+      @query.val(query)
+
+      if params and params.length
+        for param in params
+          input = @.searchForm.find("input[name=#{param[0]}]")
+          if input.length
+            input.val(param[1])
 
     # Clear location and price links and separator lines in the sidebar.
     clearSidebar: ->
@@ -511,6 +512,17 @@ define([
     # locations form when constructing search URLs.
     parseSearchLocations: (locationString) ->
       return (l.replace('location=', '') for l in locationString.split('&'))
+
+    # Parse the search params from a URL-encoded array of parameters.
+    parseSearchParams: (paramString) ->
+      params = []
+
+      _.each(paramString.split('&'), (param) ->
+        parts = param.split('=')
+        params.push([parts[0], parts[1]])
+      )
+
+      return params
 
     # Filter search results by values in `options`.
     # Only supports 'minPrice' and 'maxPrice' at present.

@@ -6,10 +6,13 @@ h1, h2, h3, h4, h5 {
     color: #967FA9;
 }
 
-a,
-a:visited {
+a, a:visited, a:link {
     text-decoration: none;
     color: #696565;
+}
+
+.navbar .nav > li > a:hover {
+    color: #fff;
 }
 
 a:hover {
@@ -46,9 +49,6 @@ a:hover {
 .category {
     width: 100px
 }
-#loading {
-    text-align: center;
-}
 
 #price-from,
 #price-to {
@@ -60,22 +60,17 @@ a:hover {
     float: left;
 }
 
-#location {
-    border: 1px;
-    width: auto;
-    margin-bottom: 10px;
-}
-
-#locations {
-    background-color: #fff;
-    cursor: text;
-    float: left;
-    width: 100%;
+.location {
+    width: 275px;
 }
 
 .loading {
-    background: #F2F2F2 url('/img/ajax-loader.gif') no-repeat center center;
-    color: #F2F2F2;
+    background: #967FA9 url('/img/loading.gif') no-repeat center center;
+    position: absolute;
+    top: 5px;
+    left: 3px;
+    height: 30px;
+    width: 30px;
 }
 
 #results {
@@ -88,8 +83,9 @@ a:hover {
 }
 
 #sidebar {
-    padding-top: 15px;
+    padding-top: 5px;
     margin-right: 40px;
+    font-size: 12px;
 }
 
 #sidebar ul {
@@ -133,4 +129,16 @@ ul, ol {
     padding: 0;
     margin: 0 0 10px 15px;
     list-style: none;
+}
+
+.form-extra {
+    margin-top: 5px;
+}
+
+.price-label {
+    min-width: 45px;
+}
+
+.search-query .help-block {
+    margin-top: 5px;
 }

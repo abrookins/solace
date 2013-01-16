@@ -22,8 +22,10 @@
       Router.prototype.routes = {
         '': 'index',
         'search/:locations/:type/:query': 'search',
-        'history': 'history',
-        'filter/:field/:min/:max/:locations/:type/:query': 'filter'
+        'search/:locations/:type/:query/:params': 'search',
+        'filter/:field/:min/:max/:locations/:type/:query': 'filter',
+        'filter/:field/:min/:max/:locations/:type/:query/:params': 'filter',
+        'history': 'history'
       };
 
       Router.prototype.initialize = function(options) {
@@ -37,25 +39,26 @@
         return this.app.displayIndex();
       };
 
-      Router.prototype.search = function(locationQuery, type, query) {
-        var parsedLocations;
+      Router.prototype.search = function(locationQuery, type, query, params) {
+        var parsedLocations, parsedParams;
         parsedLocations = this.app.parseSearchLocations(locationQuery);
-        return this.app.search(parsedLocations, type, query);
+        parsedParams = this.app.parseSearchParams(params);
+        return this.app.search(parsedLocations, type, query, parsedParams);
       };
 
-      Router.prototype.history = function() {
-        return this.app.displaySavedSearches();
-      };
-
-      Router.prototype.filter = function(field, min, max, locations, type, query) {
+      Router.prototype.filter = function(field, min, max, locations, type, query, params) {
         if (!this.app.lastSearch) {
-          this.search(locations, type, query);
+          this.search(locations, type, query, params);
         }
         return this.app.filter({
           field: field,
           min: min,
           max: max
         });
+      };
+
+      Router.prototype.history = function() {
+        return this.app.displaySavedSearches();
       };
 
       return Router;

@@ -37,6 +37,26 @@ def get_craigslist_locations():
         return locations_file.read()
 
 
+def get_filters(params):
+    """
+    Extract a dictionary containing any valid filters found in ``params``, a
+    dict of  GET parameters.
+    """
+    filters = {}
+
+    if 'min_price' in params:
+        filters['min_price'] = float(params['min_price'])
+    if 'max_price' in params:
+        filters['max_price'] = float(params['max_price'])
+    if 'min_rooms' in params:
+        filters['min_rooms'] = int(params['min_rooms'])
+    if 'max_rooms' in params:
+        filters['max_rooms'] = int(params['max_rooms'])
+
+
+    return filters
+
+
 CRAIGSLIST_LOCATIONS_JSON = get_craigslist_locations()
 CRAIGSLIST_LOCATIONS = json.loads(CRAIGSLIST_LOCATIONS_JSON)
 
@@ -80,14 +100,17 @@ def search():
          'location2': [item1, item2, ...]
        }
     """
-    locations = flask.request.args.getlist('location')
-    category = flask.request.args.get('type', None)
-    query = flask.request.args.get('q', None)
+    args = flask.request.args
+    locations = args.getlist('location')
+    category = args.get('type', None)
+    query = args.get('q', None)
+    filters = get_filters(args)
     listings = {}
 
     if query and locations and category:
         for location in locations:
-            listings[location] = craigslist.search(location, category, query)
+            listings[location] = craigslist.search(location, category, query,
+                                                   filters=filters)
 
     return flask.jsonify(result=listings)
 

@@ -24,8 +24,10 @@ define([
     routes:
       '': 'index'
       'search/:locations/:type/:query': 'search'
-      'history': 'history'
+      'search/:locations/:type/:query/:params' : 'search'
       'filter/:field/:min/:max/:locations/:type/:query': 'filter'
+      'filter/:field/:min/:max/:locations/:type/:query/:params': 'filter'
+      'history': 'history'
 
     initialize: (options) ->
       @app = new views.AppView
@@ -40,13 +42,10 @@ define([
     # Multiple locations are specified as 'location=locationName' in the URI, so
     # first we split the parameters of the search and create an array of location
     # names.
-    search: (locationQuery, type, query) =>
+    search: (locationQuery, type, query, params) =>
       parsedLocations = @app.parseSearchLocations(locationQuery)
-      @app.search(parsedLocations, type, query)
-
-    # Show list of past searches.
-    history: =>
-      @app.displaySavedSearches()
+      parsedParams = @app.parseSearchParams(params)
+      @app.search(parsedLocations, type, query, parsedParams)
 
     # Filter search results by `min` (number) and `max` (number) of `field`
     # (string - a property name of the result's CraigslistSearch).
@@ -54,10 +53,10 @@ define([
     # A search fragment is tacked onto the URL in `locations`, `type` and `query`
     # in order to make filtered URLs bookmarkable; IE, in that case the search
     # must be performed again, before the filter is applied.
-    filter: (field, min, max, locations, type, query) ->
+    filter: (field, min, max, locations, type, query, params) ->
       # Search using the given parameters if a search isn't in progress.
       if not @app.lastSearch
-        @search(locations, type, query)
+        @search(locations, type, query, params)
 
       @app.filter(
         field: field
@@ -65,6 +64,9 @@ define([
         max: max
       )
 
+    # Show list of past searches.
+    history: =>
+      @app.displaySavedSearches()
 
   return {
     Router: Router
